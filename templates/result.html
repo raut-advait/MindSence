@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your mental health assessment result">
+    <title>Your Result — MindSense</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Enhanced Result Page Styling */
+        .result-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            animation: fadeUp 0.6s ease;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(253, 121, 168, 0.05) 100%);
+            border: 1px solid rgba(108, 99, 255, 0.2);
+            border-radius: 28px;
+            padding: 48px;
+            width: 100%;
+            max-width: 600px;
+            margin: 40px auto;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            animation: scalePop 0.6s ease 0.1s both;
+        }
+
+        .result-card:hover {
+            border-color: rgba(108, 99, 255, 0.4);
+            box-shadow: 0 12px 48px rgba(108, 99, 255, 0.15);
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            text-align: center;
+            display: block;
+            margin-bottom: 20px;
+            animation: scalePop 0.6s ease 0.2s both;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .result-status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            width: 100%;
+            margin: 16px 0;
+            animation: slideDown 0.6s ease 0.3s both;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.2), rgba(0, 255, 200, 0.1));
+            border: 1px solid rgba(0, 184, 148, 0.4);
+            color: #00b894;
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(255, 200, 0, 0.1));
+            border: 1px solid rgba(253, 203, 110, 0.4);
+            color: #fdcb6e;
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, rgba(225, 112, 85, 0.2), rgba(255, 100, 80, 0.1));
+            border: 1px solid rgba(225, 112, 85, 0.4);
+            color: #e17055;
+        }
+
+        .result-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            animation: fadeUp 0.6s ease 0.4s both;
+        }
+
+        .score-gauge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin: 32px 0;
+            animation: fadeUp 0.6s ease 0.5s both;
+        }
+
+        .gauge-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto 16px auto;
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(253, 121, 168, 0.1));
+            border: 2px solid rgba(108, 99, 255, 0.3);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        .gauge-success {
+            border-color: rgba(0, 184, 148, 0.5);
+            color: #00b894;
+        }
+
+        .gauge-warning {
+            border-color: rgba(253, 203, 110, 0.5);
+            color: #fdcb6e;
+        }
+
+        .gauge-danger {
+            border-color: rgba(225, 112, 85, 0.5);
+            color: #e17055;
+        }
+
+        .result-description {
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 24px 0;
+            animation: fadeUp 0.6s ease 0.6s both;
+        }
+
+        .tips-section {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 32px 0;
+            animation: fadeUp 0.6s ease 0.7s both;
+        }
+
+        .tips-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .tip-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 0;
+            transition: all 0.3s ease;
+            animation: fadeSlideUp 0.6s ease;
+        }
+
+        .tip-item:hover {
+            padding-left: 8px;
+        }
+
+        .tip-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 32px;
+            animation: fadeUp 0.6s ease 0.8s both;
+        }
+
+        .btn-group a {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-group a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.3);
+        }
+
+        .disclaimer {
+            margin-top: 24px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+            animation: fadeUp 0.6s ease 1s both;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/student-dashboard" class="navbar-brand">
+            <div class="navbar-logo">🧠</div>
+            <span class="navbar-title">MindSense</span>
+        </a>
+        <div class="navbar-links">
+            <a href="/student-dashboard">← Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="result-page">
+        <div class="result-card">
+
+            <!-- Status Icon -->
+            <span class="result-icon">{{ icon }}</span>
+
+            <!-- Badge -->
+            <div class="result-status-badge badge-{{ badge_class }}">{{ status_label }}</div>
+
+            <!-- Title -->
+            <h1 class="result-title">{{ result }}</h1>
+
+            <!-- Score gauge -->
+            <div class="score-gauge">
+                <div class="gauge-circle gauge-{{ badge_class }}">
+                    {{ score }}<span style="font-size:0.9rem;">/40</span>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted);">Total Wellness Score</div>
+            </div>
+
+            <!-- Description -->
+            <p class="result-description">{{ description }}</p>
+
+            <!-- Tips -->
+            <div class="tips-section">
+                <div class="tips-title">💡 Personalized Recommendations</div>
+                {% for tip in tips %}
+                <div class="tip-item">
+                    <div class="tip-icon {{ tip.color }}">{{ tip.emoji }}</div>
+                    <span>{{ tip.text }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Breakdown -->
+            <div style="margin-bottom:32px;">
+                <div class="tips-title" style="text-align:left; margin-bottom:16px;">📊 Score Breakdown</div>
+                {% for item in breakdown %}
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:600;">{{ item.label
+                            }}</span>
+                        <span style="font-size:0.85rem; color:var(--text-muted);">{{ item.value }}/5</span>
+                    </div>
+                    <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:100px; overflow:hidden;">
+                        <div
+                            style="height:100%; width:{{ item.pct }}%; background:linear-gradient(90deg, {{ item.color }}); border-radius:100px; transition:width 1s ease;">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+                <a href="/test" class="btn btn-primary">🔁 Retake Test</a>
+                <a href="/student-dashboard" class="btn btn-outline">🏠 Dashboard</a>
+            </div>
+
+            <div
+                style="margin-top:24px; font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.6;">
+                ⚠️ This assessment is for informational purposes only and is <strong>not</strong> a medical
+                diagnosis.<br>
+                If you're struggling, please reach out to a mental health professional.
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

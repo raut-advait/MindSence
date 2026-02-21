@@ -1,0 +1,49 @@
+{
+  "feature_names": [
+    "stress",
+    "anxiety",
+    "sleep",
+    "focus",
+    "social",
+    "sadness",
+    "energy",
+    "overwhelm",
+    "diet_quality",
+    "family_history",
+    "chronic_illness",
+    "counseling_use"
+  ],
+  "feature_mapping": {
+    "stress": "Stress_Level (0-5)",
+    "anxiety": "Anxiety_Score (0-5)",
+    "sleep": "Sleep_Quality (1-5 encoded)",
+    "focus": "CGPA (1-5 normalized)",
+    "social": "Social_Support (1-5 encoded)",
+    "sadness": "Depression_Score (0-5)",
+    "energy": "Physical_Activity (1-5 encoded)",
+    "overwhelm": "Financial_Stress (0-5)"
+  },
+  "model_stats": {
+    "training_samples": 5617,
+    "testing_samples": 1405,
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "auc_roc": 1.0
+  },
+  "medians": {
+    "stress": 2.0,
+    "anxiety": 2.0,
+    "sleep": 5.0,
+    "focus": 3.0,
+    "social": 3.0,
+    "sadness": 2.0,
+    "energy": 3.0,
+    "overwhelm": 2.0,
+    "diet_quality": 3.0,
+    "family_history": 0.0,
+    "chronic_illness": 0.0,
+    "counseling_use": 0.0
+  }
+}
