@@ -857,24 +857,42 @@ def predict():
             threshold = float(_lifestyle_meta.get('selected_threshold', 0.5))
             threshold = min(max(threshold, 0.05), 0.50)
 
-            # Convert probability to a score relative to the model's own decision threshold.
-            # At threshold -> score ~10/40, then rising with increasing confidence.
-            total_score = int(round((prob / threshold) * 10.0))
+            # Build a questionnaire-driven risk score (0-40) so full-mode feedback
+            # remains sensitive to user-selected values, then blend with ML score.
+            sleep_quality = _sleep_hours_to_quality(sleep)
+            q_stress = max(1, min(5, round(stress_val)))
+            q_anxiety = max(1, min(5, round(anxiety)))
+            q_focus = max(1, min(5, round(focus)))
+            q_social = max(1, min(5, round(social_conn)))
+            q_sadness = max(1, min(5, round(sadness)))
+            q_energy = max(1, min(5, round(energy)))
+            q_overwhelm = max(1, min(5, round(overwhelm)))
+
+            questionnaire_components = {
+                'stress': q_stress,
+                'anxiety': q_anxiety,
+                'sleep': 6 - sleep_quality,
+                'focus': 6 - q_focus,
+                'social': 6 - q_social,
+                'sadness': q_sadness,
+                'energy': 6 - q_energy,
+                'overwhelm': q_overwhelm,
+            }
+            questionnaire_score = int(sum(questionnaire_components.values()))
+            model_score = int(round(prob * 40.0))
+
+            # Hybrid score: prioritize questionnaire signal while retaining ML influence.
+            total_score = int(round(0.70 * questionnaire_score + 0.30 * model_score))
             total_score = min(max(total_score, 0), 40)
 
-            # Threshold-aware risk bands (aligned with selected_threshold from metadata).
-            # Use tighter boundaries to avoid over-labeling "Excellent".
-            excellent_cut = min(1.0, threshold * 0.45)
-            moderate_cut = min(1.0, threshold * 0.90)
-            high_cut = min(1.0, threshold * 1.35)
-
-            if prob < excellent_cut:
+            # Category from blended risk score (same 4-band architecture).
+            if total_score <= 10:
                 ml_category = "Excellent Mental Well-being"
                 band = "Excellent"
-            elif prob < moderate_cut:
+            elif total_score <= 20:
                 ml_category = "Moderate Stress Detected"
                 band = "Moderate"
-            elif prob < high_cut:
+            elif total_score <= 30:
                 ml_category = "High Stress & Anxiety"
                 band = "High"
             else:
@@ -883,8 +901,8 @@ def predict():
 
             analysis = analyze_score_by_category(ml_category)
             logger.info(
-                "Lifestyle model prediction | mode=%s | P(Depression)=%.4f | threshold=%.3f | score=%d | band=%s",
-                mode, prob, threshold, total_score, band
+                "Lifestyle model prediction | mode=%s | P(Depression)=%.4f | threshold=%.3f | q_score=%d | ml_score=%d | final_score=%d | band=%s",
+                mode, prob, threshold, questionnaire_score, model_score, total_score, band
             )
         except Exception as exc:
             logger.error("Lifestyle model prediction failed, falling back to rule-based scoring: %s", exc)
