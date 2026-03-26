@@ -1,340 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Mental health resources and support services">
     <title>Resources — MindSense</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="shortcut icon" href="/static/favicon.svg">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Enhanced Resources Page Styling */
-        .main-header {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15) 0%, rgba(253, 121, 168, 0.1) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
-            animation: slideDown 0.6s ease;
+        .resources-shell {
+            display: grid;
+            gap: 18px;
+            max-width: 1260px;
+            margin: 0 auto;
         }
 
-        .main-header h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .resources-card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
         }
 
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .resource-section {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(0, 206, 201, 0.05) 100%);
+        .resource-item {
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-            animation: fadeUp 0.6s ease;
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+            padding: 14px;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .resource-section:hover {
-            border-color: rgba(108, 99, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.12);
+        .resource-item strong {
+            font-size: 1.02rem;
+            color: var(--text-primary);
         }
 
-        .crisis-section {
-            background: linear-gradient(135deg, rgba(230, 126, 34, 0.15), rgba(231, 76, 60, 0.1));
-            border: 2px solid rgba(231, 76, 60, 0.4);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 24px;
-            animation: slideDown 0.6s ease;
+        .resource-item div {
+            color: var(--text-secondary);
+            line-height: 1.45;
         }
 
-        .resource-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            padding: 20px;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            animation: fadeSlideUp 0.6s ease;
+        .resource-item small {
+            color: var(--text-muted);
         }
 
-        .resource-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(108, 99, 255, 0.3);
-            background: rgba(108, 99, 255, 0.08);
-            box-shadow: 0 12px 30px rgba(108, 99, 255, 0.15);
-        }
-
-        .resource-card a {
-            transition: all 0.3s ease;
-        }
-
-        .resource-card a:hover {
-            text-decoration: underline;
+        .resource-item a {
+            margin-top: 4px;
+            text-decoration: none;
+            font-weight: 600;
             color: var(--primary);
+        }
+
+        .resource-item a:hover { text-decoration: underline; }
+
+        @media (max-width: 1023px) {
+            .resources-card-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 767px) {
+            .main-body { padding: 14px !important; }
+            .resources-shell { gap: 14px; }
+        }
+
+        @media (max-width: 479px) {
+            .resource-item { padding: 12px; }
         }
     </style>
 </head>
-
 <body>
-
-    <div class="dashboard-layout">
-
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-icon">🧠</div>
-                <div class="sidebar-brand-text">
-                    MindSense
-                    <span>Student Portal</span>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-section-title">Main</div>
-                <a href="/student-dashboard" class="sidebar-link">
-                    <span class="link-icon">🏠</span> Dashboard
-                </a>
-                <a href="/test" class="sidebar-link">
-                    <span class="link-icon">🧪</span> Take a Test
-                </a>
-                <a href="/history" class="sidebar-link">
-                    <span class="link-icon">📈</span> History
-                </a>
-
-                <div class="sidebar-section-title">Wellness</div>
-                <a href="/resources" class="sidebar-link active">
-                    <span class="link-icon">📚</span> Resources
-                </a>
-                <a href="/daily-tips" class="sidebar-link">
-                    <span class="link-icon">💡</span> Daily Tips
-                </a>
-
-                <div class="sidebar-section-title">Account</div>
-                <a href="/logout" class="sidebar-link logout">
-                    <span class="link-icon">🚪</span> Logout
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="avatarInitial">
-                        {{ session['user'][0].upper() }}
-                    </div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUsername">{{ session['name'] if session.get('name')
-                            else session['user'] }}</div>
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+            <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
+        </a>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-title">Main</div>
+            <a href="/student-dashboard" class="sidebar-link"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+            <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+            <a href="/history" class="sidebar-link"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+            <a href="/analytics" class="sidebar-link"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+            <div class="sidebar-section-title">Wellness</div>
+            <a href="/resources" class="sidebar-link active"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+            <a href="/daily-tips" class="sidebar-link"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="account-card" id="accountToggle" type="button">
+                <div class="left">
+                    <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+                    <div>
+                        <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
                         <div class="sidebar-user-role">Student</div>
                     </div>
                 </div>
+                <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+            </button>
+            <div class="account-popover" id="accountMenu">
+                <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
-
-            <!-- Header bar -->
-            <div class="main-header">
-                <div class="main-header-title">
-                    <h1>📚 Mental Health Resources</h1>
-                    <p>Professional support, hotlines, apps, and helpful information</p>
-                </div>
-                <a href="/test" class="btn btn-primary btn-sm">Take a Test</a>
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-header-title">
+                <h1>Resources</h1>
+                <p>Professional support, helplines, and self-help tools</p>
             </div>
+            <a href="/test" class="btn btn-primary btn-sm">Take Assessment</a>
+        </div>
 
-            <div class="main-body">
-
-                <!-- Crisis Support (Always visible) -->
-                <div style="background:linear-gradient(135deg, rgba(230, 126, 34, 0.2), rgba(231, 76, 60, 0.2)); border:2px solid rgba(231, 76, 60, 0.4); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:flex-start; gap:20px;">
-                        <div style="font-size:3rem; flex-shrink:0;">🆘</div>
-                        <div>
-                            <h3 style="margin:0 0 8px 0; color:#ff6b6b; font-size:1.3rem;">In Crisis? Get Help Now</h3>
-                            <p style="margin:0 0 16px 0; color:var(--text-secondary);">If you're in immediate danger or having thoughts of self-harm, please reach out to emergency services immediately.</p>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                                <div>
-                                    <div style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:4px;">🇮🇳 INDIA</div>
-                                    <div style="font-weight:700; color:#ff6b6b; font-size:1.1rem;">iCall: 9152987821</div>
-                                    <div style="color:var(--text-secondary); font-size:0.8rem;">Mon–Sat, 8AM–10PM IST</div>
-                                </div>
-                                <div>
-                                    <div style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:4px;">🇺🇸 GLOBAL</div>
-                                    <div style="font-weight:700; color:#ff6b6b; font-size:1.1rem;">988 Suicide Hotline</div>
-                                    <div style="color:var(--text-secondary); font-size:0.8rem;">24/7 Available (US)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="main-body">
+            <div class="resources-shell">
+            <section class="chart-container" style="border-color:var(--destructive-border);padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="siren"></i></span>Crisis Support</div>
+                <p style="color:var(--text-secondary);margin-bottom:12px;">If you are in immediate danger or considering self-harm, contact emergency services right away.</p>
+                <div class="resources-card-grid">
+                    <div class="resource-item"><strong>India</strong><div>iCall: 9152987821</div><small>Mon–Sat, 8AM–10PM IST</small></div>
+                    <div class="resource-item"><strong>US</strong><div>988 Lifeline</div><small>24/7 national support</small></div>
                 </div>
+            </section>
 
-                <!-- Helplines & Support -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                        <div style="font-size:2rem;">📞</div>
-                        <h3 style="margin:0; color:var(--text-primary);">Helplines & Support Services</h3>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">AASRA</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Suicide Prevention & Counselling• India</div>
-                            <div style="font-weight:600; color:var(--primary); margin-bottom:4px;">📱 +91-22-27546669</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">24/7 • Email: aasra@aasra.info</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">NIMHANS</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">National Institute Mental Health • Bangalore</div>
-                            <div style="font-weight:600; color:var(--primary); margin-bottom:4px;">📱 080-46110007</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">9AM-5PM • Professional counseling</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">Vandrevala Foundation</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Mental Health & Suicide Prevention</div>
-                            <div style="font-weight:600; color:var(--primary); margin-bottom:4px;">📱 9999 77 8888</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">24/7 • Confidential support</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">iCall</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Crisis Counselling & Emotional Support</div>
-                            <div style="font-weight:600; color:var(--primary); margin-bottom:4px;">📱 9152987821</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">Mon–Sat, 8AM–10PM • Free service</div>
-                        </div>
-                    </div>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="phone"></i></span>Helplines</div>
+                <div class="resources-card-grid">
+                    <div class="resource-item"><strong>AASRA</strong><div>+91-22-27546669</div><small>24/7 support</small></div>
+                    <div class="resource-item"><strong>NIMHANS</strong><div>080-46110007</div><small>Professional counseling</small></div>
+                    <div class="resource-item"><strong>Vandrevala</strong><div>9999 77 8888</div><small>24/7 confidential support</small></div>
+                    <div class="resource-item"><strong>iCall</strong><div>9152987821</div><small>Free service</small></div>
                 </div>
+            </section>
 
-                <!-- Apps & Tools -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                        <div style="font-size:2rem;">📱</div>
-                        <h3 style="margin:0; color:var(--text-primary);">Mental Health Apps & Tools</h3>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🧘 Headspace</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Meditation & mindfulness with expert guidance.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Free & Premium • iOS, Android, Web</div>
-                            <a href="https://www.headspace.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Headspace →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🧠 Calm</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Sleep stories, meditation, and relaxation exercises.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Premium with free trial • iOS, Android</div>
-                            <a href="https://www.calm.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Calm →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">📊 Moodpath</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Track mood, identify mental health issues with AI.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Free & Premium • iOS, Android</div>
-                            <a href="https://moodpath.de" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Moodpath →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">💤 Sleep Cycle</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Smart alarm and sleep tracking technology.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Free & Premium • iOS, Android</div>
-                            <a href="https://www.sleepcycle.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Sleep Cycle →</a>
-                        </div>
-                    </div>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="smartphone"></i></span>Apps</div>
+                <div class="resources-card-grid">
+                    <div class="resource-item"><strong>Headspace</strong><div>Meditation and mindfulness guidance.</div><a href="https://www.headspace.com" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>Calm</strong><div>Relaxation, sleep, and stress management.</div><a href="https://www.calm.com" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>Moodpath</strong><div>Mood tracking and mental health journaling.</div><a href="https://moodpath.de" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>Sleep Cycle</strong><div>Sleep quality tracking and alarm support.</div><a href="https://www.sleepcycle.com" target="_blank">Open site</a></div>
                 </div>
+            </section>
 
-                <!-- Online Support & Counseling -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                        <div style="font-size:2rem;">💻</div>
-                        <h3 style="margin:0; color:var(--text-primary);">Online Counseling & Therapy</h3>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🏥 BetterHelp</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Licensed therapists via video, phone, or chat.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Affordable • Available 24/7 globally</div>
-                            <a href="https://www.betterhelp.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit BetterHelp →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">👥 Talkspace</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Therapy with licensed therapists online.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Prescription & psychiatric support available</div>
-                            <a href="https://www.talkspace.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Talkspace →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🇮🇳 YourDost</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">India's leading online mental health platform.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Counselors & therapists from India</div>
-                            <a href="https://www.yourdost.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit YourDost →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🧩 7 Cups</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Free emotional support from trained listeners.</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">✓ Free & anonymous • Peer & professional support</div>
-                            <a href="https://www.7cups.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit 7 Cups →</a>
-                        </div>
-                    </div>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="users"></i></span>Online Counseling</div>
+                <div class="resources-card-grid">
+                    <div class="resource-item"><strong>BetterHelp</strong><div>Online therapy with licensed providers.</div><a href="https://www.betterhelp.com" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>Talkspace</strong><div>Therapy and psychiatric support.</div><a href="https://www.talkspace.com" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>YourDost</strong><div>India-focused counseling network.</div><a href="https://www.yourdost.com" target="_blank">Open site</a></div>
+                    <div class="resource-item"><strong>7 Cups</strong><div>Trained listeners and emotional support.</div><a href="https://www.7cups.com" target="_blank">Open site</a></div>
                 </div>
-
-                <!-- Educational Resources -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                        <div style="font-size:2rem;">📖</div>
-                        <h3 style="margin:0; color:var(--text-primary);">Educational Resources & Articles</h3>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🧠 Mind: Mental Health UK</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Comprehensive information about mental health conditions.</div>
-                            <a href="https://www.mind.org.uk" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Mind →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🏥 Psychology Today</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Find therapists and read mental health articles.</div>
-                            <a href="https://www.psychologytoday.com" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit Psychology Today →</a>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                            <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">🇮🇳 Hindi Mental Health</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:12px;">Resources in Hindi for Indian students.</div>
-                            <a href="https://www.mentalhealthfoundationindia.org" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;">Visit MHFI →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Campus Support -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                        <div style="font-size:2rem;">🏫</div>
-                        <h3 style="margin:0; color:var(--text-primary);">Campus Support Resources</h3>
-                    </div>
-                    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px;">
-                        <p style="color:var(--text-secondary); margin:0 0 12px 0;">Most colleges offer free counseling services to students. Check with your college:</p>
-                        <ul style="color:var(--text-secondary); margin:0; padding-left:20px; line-height:1.8;">
-                            <li>📚 Student Counseling Center</li>
-                            <li>🏥 Health Office or Medical Center</li>
-                            <li>👨‍💼 Dean of Students Office</li>
-                            <li>🤝 Peer Support Programs</li>
-                            <li>📋 Disability Services</li>
-                        </ul>
-                        <div style="margin-top:16px; padding:12px; background:rgba(0,206,201,0.1); border-left:3px solid var(--accent); border-radius:4px;">
-                            <div style="color:var(--accent); font-weight:600;">💡 Pro Tip</div>
-                            <div style="color:var(--text-secondary); font-size:0.9rem; margin-top:4px;">Most campus counseling is FREE and confidential. Don't hesitate to reach out!</div>
-                        </div>
-                    </div>
-                </div>
-
+            </section>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 
+<script>
+    document.getElementById('accountToggle').addEventListener('click', () => {
+        document.getElementById('accountMenu').classList.toggle('open');
+    });
+    lucide.createIcons();
+</script>
+<script src="/static/theme.js"></script>
 </body>
-
 </html>

@@ -1,575 +1,824 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your personal mental health dashboard">
     <title>Dashboard — MindSense</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="shortcut icon" href="/static/favicon.svg">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Enhanced Dashboard Styling */
-        .main-header {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15) 0%, rgba(253, 121, 168, 0.1) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
-            animation: slideDown 0.6s ease;
+        .main-body { padding: 24px 28px !important; }
+        .dashboard-wrap {
+            display: grid;
+            gap: 22px;
+            max-width: 1260px;
+            margin: 0 auto;
         }
 
-        .main-header h1 {
-            font-size: 2.2rem;
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+        .panel-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+        .mood-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .tips-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+        .tip-card {
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 14px 14px 12px;
+            background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+            min-height: 92px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tip-title {
+            font-weight: 700;
+            font-size: 1.02rem;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .tip-copy {
+            font-size: .9rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+
+        .main-header-title h1 {
+            margin: 0;
+            font-size: clamp(1.55rem, 2.6vw, 2.05rem);
+            line-height: 1.12;
+            letter-spacing: -0.02em;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
         }
 
-        .welcome-hero {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(0, 206, 201, 0.08) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
+        .main-header-title p {
+            margin: 6px 0 0;
+            font-size: clamp(.92rem, 1.45vw, 1.02rem);
+            line-height: 1.45;
+            color: var(--text-secondary);
+            letter-spacing: 0.01em;
+        }
+
+        .kpi-card {
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+            min-height: 124px;
+        }
+
+        .kpi-value { font-size: 1.95rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+        .kpi-label { color: var(--text-muted); font-size: .83rem; margin-bottom: 10px; }
+
+        .focus-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: var(--text-secondary); }
+        .focus-quote { margin-top: 14px; color: var(--text-muted); font-size: .92rem; }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .mood-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 58px;
+            padding: 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all .2s ease;
+            font-weight: 600;
+        }
+
+        .mood-btn:hover { border-color: rgba(255,255,255,.34); background: rgba(255,255,255,.08); }
+        .mood-btn.selected { border-color: rgba(255,255,255,.46); background: rgba(255,255,255,.12); }
+
+        .mood-message {
+            display: none;
+            margin-top: 12px;
+            padding: 10px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: .9rem;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: clamp(1.02rem, 1.8vw, 1.2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            margin-bottom: 14px;
+            padding: 9px 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+        }
+
+        .history-box {
+            margin-top: 14px;
+            padding: 14px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+        }
+
+        .history-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .history-tag {
+            padding: 8px 10px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            font-size: .8rem;
+        }
+
+        .chat-fab {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            width: 64px;
+            height: 64px;
+            border-radius: 999px;
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1200;
+            box-shadow: 0 8px 24px rgba(0,0,0,.24);
+        }
+
+        .chat-fab img {
+            width: 34px;
+            height: 34px;
+        }
+
+        .chat-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.38);
+            backdrop-filter: blur(2px);
+            display: none;
+            z-index: 1250;
+        }
+
+        .chat-overlay.open {
+            display: block;
+        }
+
+        .chat-panel {
+            position: fixed;
+            right: 18px;
+            bottom: 94px;
+            width: 360px;
+            max-width: calc(100vw - 24px);
+            height: 520px;
+            max-height: calc(100vh - 130px);
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(145deg, rgba(20,20,24,.96), rgba(16,16,18,.96));
+            display: none;
+            z-index: 1300;
+            overflow: hidden;
+        }
+
+        .chat-panel.open {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        .chat-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            animation: fadeUp 0.6s ease 0.1s both;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--glass-border);
+            gap: 10px;
         }
 
-        .welcome-hero:hover {
-            border-color: rgba(108, 99, 255, 0.4);
-            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.12);
-            transform: translateY(-2px);
-            transition: all 0.3s ease;
-        }
-
-        .welcome-emoji {
-            font-size: 5rem;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: radial-gradient(ellipse at top right, rgba(108, 99, 255, 0.12), transparent),
-                        var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 28px;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            backdrop-filter: blur(20px);
-            animation: fadeSlideUp 0.6s ease;
-        }
-
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
-        .stat-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(108, 99, 255, 0.5);
-            box-shadow: 0 12px 40px rgba(108, 99, 255, 0.2);
-        }
-
-        .stat-card-icon {
-            font-size: 2rem;
-            filter: drop-shadow(0 4px 12px rgba(108, 99, 255, 0.3));
-        }
-
-        .stat-card-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 12px 0;
-        }
-
-        .mood-tracker {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(0, 206, 201, 0.05) 100%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 32px;
-            backdrop-filter: blur(20px);
-            margin-bottom: 32px;
-            animation: fadeUp 0.6s ease 0.2s both;
-        }
-
-        .mood-btn {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .mood-btn:hover {
-            transform: translateY(-6px) scale(1.05);
-            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.25);
-        }
-
-        .test-card {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(253, 121, 168, 0.05) 100%);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 28px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            animation: fadeSlideUp 0.6s ease;
-        }
-
-        .test-card:nth-child(1) { animation-delay: 0.3s; }
-        .test-card:nth-child(2) { animation-delay: 0.4s; }
-
-        .test-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-            transition: left 0.6s ease;
-        }
-
-        .test-card:hover::before {
-            left: 100%;
-        }
-
-        .test-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(108, 99, 255, 0.4);
-            box-shadow: 0 12px 40px rgba(108, 99, 255, 0.15);
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 24px;
+        .chat-title {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            font-weight: 700;
+            flex: 1;
+            min-width: 0;
         }
 
-        #tips {
-            animation: fadeUp 0.6s ease 0.5s both;
+        #chatCloseBtn {
+            flex: 0 0 auto;
+            width: auto;
+            min-width: 78px;
+            padding: 8px 14px;
+            white-space: nowrap;
+        }
+
+        .chat-body {
+            padding: 12px;
+            overflow-y: auto;
+            display: grid;
+            gap: 10px;
+            align-content: start;
+        }
+
+        .chat-bubble {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            font-size: .9rem;
+            line-height: 1.45;
+            white-space: pre-wrap;
+        }
+
+        .chat-bubble.user {
+            background: rgba(59,130,246,.16);
+            justify-self: end;
+            max-width: 90%;
+        }
+
+        .chat-bubble.bot {
+            background: rgba(255,255,255,.05);
+            justify-self: start;
+            max-width: 94%;
+        }
+
+        .chat-bubble .ai-paragraph {
+            margin: 0 0 8px;
+            line-height: 1.5;
+        }
+
+        .chat-bubble .ai-list {
+            margin: 6px 0 0;
+            padding-left: 18px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .chat-bubble .ai-list li {
+            line-height: 1.45;
+        }
+
+        .chat-bubble strong {
+            color: #dcecff;
+            font-weight: 700;
+        }
+
+        .chat-input-wrap {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .chat-input {
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,.04);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            font-size: .9rem;
+        }
+
+        @media (max-width: 1279px) {
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .panel-grid { grid-template-columns: 1fr; }
+            .mood-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .tips-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 767px) {
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .mood-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .tips-grid { grid-template-columns: 1fr; }
+            .action-grid { grid-template-columns: 1fr; }
+            .main-body { padding: 14px !important; }
+            .dashboard-wrap { gap: 16px; }
+            .kpi-card { min-height: auto; }
+            .tip-card { min-height: auto; padding: 13px 12px; }
+            .main-header-title h1 {
+                font-size: 1.52rem;
+            }
+            .main-header-title p {
+                margin-top: 4px;
+                font-size: .92rem;
+            }
+            .section-head {
+                padding: 8px 10px;
+                margin-bottom: 12px;
+                font-size: 1.03rem;
+            }
+            .chat-fab {
+                width: 58px;
+                height: 58px;
+                right: 12px;
+                bottom: 12px;
+            }
+            .chat-panel {
+                right: 12px;
+                left: 12px;
+                bottom: 78px;
+                width: auto;
+                height: min(66vh, 520px);
+                max-width: none;
+                border-radius: 12px;
+            }
+            .chat-head {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+            .chat-title {
+                font-size: 1.05rem;
+            }
+            #chatCloseBtn {
+                min-width: 72px;
+                padding: 7px 12px;
+            }
+            .chat-body {
+                padding: 10px;
+                gap: 9px;
+            }
+            .chat-bubble {
+                padding: 10px 11px;
+                font-size: .95rem;
+                line-height: 1.5;
+            }
+            .chat-input-wrap {
+                padding: 10px;
+                gap: 10px;
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+            .chat-input {
+                min-height: 44px;
+                padding: 11px 12px;
+            }
+            .chat-input-wrap .btn {
+                min-height: 44px;
+                min-width: 88px;
+                padding: 0 14px;
+            }
+        }
+
+        @media (max-width: 479px) {
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .mood-grid { grid-template-columns: 1fr; }
+            .chat-panel {
+                right: 8px;
+                left: 8px;
+                bottom: 72px;
+                height: min(68vh, 520px);
+            }
+            .chat-head {
+                padding: 9px 10px;
+            }
+            #chatCloseBtn {
+                min-width: 68px;
+                padding: 6px 10px;
+            }
+            .chat-body {
+                padding: 9px;
+            }
+            .chat-input-wrap {
+                padding: 9px;
+                gap: 8px;
+            }
+            .chat-input-wrap .btn {
+                min-width: 80px;
+            }
         }
     </style>
 </head>
-
 <body>
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+            <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
+        </a>
 
-    <div class="dashboard-layout">
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-title">Main</div>
+            <a href="/student-dashboard" class="sidebar-link active"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+            <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+            <a href="/history" class="sidebar-link"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+            <a href="/analytics" class="sidebar-link"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+            <div class="sidebar-section-title">Wellness</div>
+            <a href="/resources" class="sidebar-link"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+            <a href="/daily-tips" class="sidebar-link"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+        </nav>
 
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-icon">🧠</div>
-                <div class="sidebar-brand-text">
-                    MindSense
-                    <span>Student Portal</span>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-section-title">Main</div>
-                <a href="/student-dashboard" class="sidebar-link active">
-                    <span class="link-icon">🏠</span> Dashboard
-                </a>
-                <a href="/test" class="sidebar-link">
-                    <span class="link-icon">🧪</span> Take a Test
-                </a>
-                <a href="/history" class="sidebar-link">
-                    <span class="link-icon">📈</span> History
-                </a>
-
-                <div class="sidebar-section-title">Wellness</div>
-                <a href="/resources" class="sidebar-link">
-                    <span class="link-icon">📚</span> Resources
-                </a>
-                <a href="/daily-tips" class="sidebar-link">
-                    <span class="link-icon">💡</span> Daily Tips
-                </a>
-
-                <div class="sidebar-section-title">Account</div>
-                <a href="/logout" class="sidebar-link logout">
-                    <span class="link-icon">🚪</span> Logout
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="avatarInitial">
-                        {{ session['user'][0].upper() }}
-                    </div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUsername">{{ session['name'] if session.get('name')
-                            else session['user'] }}</div>
+        <div class="sidebar-footer">
+            <button class="account-card" id="accountToggle" type="button">
+                <div class="left">
+                    <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+                    <div>
+                        <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
                         <div class="sidebar-user-role">Student</div>
                     </div>
                 </div>
+                <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+            </button>
+            <div class="account-popover" id="accountMenu">
+                <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
-
-            <!-- Header bar -->
-            <div class="main-header">
-                <div class="main-header-title">
-                    <h1>Dashboard</h1>
-                    <p id="currentDate">Loading...</p>
-                </div>
-                <a href="/test" class="btn btn-primary btn-sm">+ New Test</a>
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-header-title">
+                <h1>Dashboard</h1>
+                <p id="currentDate">Loading...</p>
             </div>
+            <a href="/test" class="btn btn-primary btn-sm">Start New Test</a>
+        </div>
 
-            <div class="main-body">
+        <div class="main-body">
+            <div class="dashboard-wrap">
+                <section class="kpi-grid">
+                    <article class="kpi-card">
+                        <div class="kpi-value">{{ test_count if test_count is defined else 0 }}</div>
+                        <div class="kpi-label">Tests Taken</div>
+                        <div class="kpi-sparkline"><span style="height:35%"></span><span style="height:45%"></span><span style="height:50%"></span><span style="height:62%"></span><span style="height:70%"></span></div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="kpi-value">{{ last_score if last_score is defined else '—' }}</div>
+                        <div class="kpi-label">Last Score</div>
+                        <div class="kpi-sparkline"><span style="height:60%"></span><span style="height:56%"></span><span style="height:40%"></span><span style="height:48%"></span><span style="height:44%"></span></div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="kpi-value">1</div>
+                        <div class="kpi-label">Current Streak</div>
+                        <div class="kpi-sparkline"><span style="height:18%"></span><span style="height:34%"></span><span style="height:45%"></span><span style="height:62%"></span><span style="height:72%"></span></div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="kpi-value">Stable</div>
+                        <div class="kpi-label">Current Trend</div>
+                        <div class="kpi-sparkline"><span style="height:45%"></span><span style="height:45%"></span><span style="height:42%"></span><span style="height:44%"></span><span style="height:46%"></span></div>
+                    </article>
+                </section>
 
-                <!-- Welcome Hero -->
-                <div class="welcome-hero">
-                    <div class="welcome-text">
-                        <h2>Welcome back, {{ session['name'].split()[0] if session.get('name') else
-                            session['user'].split('@')[0].capitalize() }} 👋</h2>
-                        <p>Hope you're having a wonderful day. Your mental health matters!</p>
-                        <div class="date-badge">
-                            📅 <span id="todayDate">Loading...</span>
-                        </div>
-                    </div>
-                    <div class="welcome-emoji" id="welcomeEmoji">🌤️</div>
-                </div>
+                <section class="panel-grid">
+                    <article class="chart-container" style="padding:18px;">
+                        <div class="section-head"><span class="icon-24"><i data-lucide="list-checks"></i></span>Today’s Wellness Focus</div>
+                        <ul class="focus-list">
+                            <li>Drink enough water through the day.</li>
+                            <li>Take one mindful break between classes.</li>
+                            <li>Avoid screens 30 minutes before sleep.</li>
+                        </ul>
+                        <p id="motivationQuote" class="focus-quote">Small daily habits create strong mental resilience.</p>
+                    </article>
 
-                <!-- Stats Row -->
-                <div class="stats-grid">
-                    <div class="stat-card green">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">🧪</span>
-                            <span class="stat-card-badge">Total</span>
+                    <article class="chart-container" style="padding:18px;">
+                        <div class="section-head"><span class="icon-24"><i data-lucide="zap"></i></span>Quick Actions</div>
+                        <div class="action-grid">
+                            <a href="/test?mode=quick" class="btn btn-outline btn-sm">Quick Test</a>
+                            <a href="/test?mode=full" class="btn btn-outline btn-sm">Full Test</a>
+                            <a href="/history" class="btn btn-outline btn-sm">View History</a>
+                            <a href="/daily-tips" class="btn btn-outline btn-sm">Read Tips</a>
                         </div>
-                        <div class="stat-card-value">{{ test_count if test_count is defined else 0 }}</div>
-                        <div class="stat-card-label">Tests Taken</div>
-                    </div>
-                    <div class="stat-card pink">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">🌟</span>
-                            <span class="stat-card-badge">Score</span>
-                        </div>
-                        <div class="stat-card-value">{{ last_score if last_score is defined else '—' }}</div>
-                        <div class="stat-card-label">Last Score</div>
-                    </div>
-                    <div class="stat-card teal">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">📅</span>
-                            <span class="stat-card-badge">Streak</span>
-                        </div>
-                        <div class="stat-card-value">1</div>
-                        <div class="stat-card-label">Day Streak</div>
-                    </div>
-                    <div class="stat-card orange">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">💚</span>
-                            <span class="stat-card-badge">Status</span>
-                        </div>
-                        <div class="stat-card-value">Good</div>
-                        <div class="stat-card-label">Overall Mood</div>
-                    </div>
-                </div>
+                    </article>
+                </section>
 
-                <!-- Today's Mood -->
-                <div class="mood-tracker">
-                    <div class="section-title">How are you feeling today? <span>Daily check-in</span></div>
-                    <div class="mood-options">
-                        <button class="mood-btn" onclick="selectMood(this, 'Amazing')" id="mood-amazing">
-                            <span class="emoji">😄</span>
-                            <span class="label">Amazing</span>
-                        </button>
-                        <button class="mood-btn" onclick="selectMood(this, 'Good')" id="mood-good">
-                            <span class="emoji">😊</span>
-                            <span class="label">Good</span>
-                        </button>
-                        <button class="mood-btn" onclick="selectMood(this, 'Okay')" id="mood-okay">
-                            <span class="emoji">😐</span>
-                            <span class="label">Okay</span>
-                        </button>
-                        <button class="mood-btn" onclick="selectMood(this, 'Stressed')" id="mood-stressed">
-                            <span class="emoji">😟</span>
-                            <span class="label">Stressed</span>
-                        </button>
-                        <button class="mood-btn" onclick="selectMood(this, 'Anxious')" id="mood-anxious">
-                            <span class="emoji">😰</span>
-                            <span class="label">Anxious</span>
-                        </button>
-                        <button class="mood-btn" onclick="selectMood(this, 'Sad')" id="mood-sad">
-                            <span class="emoji">😢</span>
-                            <span class="label">Sad</span>
-                        </button>
+                <section class="chart-container" style="padding:18px;">
+                    <div class="section-head"><span class="icon-24"><i data-lucide="activity"></i></span>Daily Mood Check-In</div>
+                    <div class="mood-grid">
+                        <button class="mood-btn" onclick="selectMood(this, 'Amazing')" id="mood-amazing"><i data-lucide="laugh"></i> Amazing</button>
+                        <button class="mood-btn" onclick="selectMood(this, 'Good')" id="mood-good"><i data-lucide="smile"></i> Good</button>
+                        <button class="mood-btn" onclick="selectMood(this, 'Okay')" id="mood-okay"><i data-lucide="meh"></i> Okay</button>
+                        <button class="mood-btn" onclick="selectMood(this, 'Stressed')" id="mood-stressed"><i data-lucide="alarm-clock"></i> Stressed</button>
+                        <button class="mood-btn" onclick="selectMood(this, 'Anxious')" id="mood-anxious"><i data-lucide="triangle-alert"></i> Anxious</button>
+                        <button class="mood-btn" onclick="selectMood(this, 'Sad')" id="mood-sad"><i data-lucide="cloud-rain"></i> Sad</button>
                     </div>
-                    <div id="moodMessage"
-                        style="margin-top:16px; font-size:0.9rem; color:var(--text-secondary); display:none; padding:12px 16px; background:rgba(108,99,255,0.08); border-radius:10px; border:1px solid rgba(108,99,255,0.15);">
-                    </div>
+                    <div id="moodMessage" class="mood-message"></div>
                     <div id="moodHistory"></div>
-                </div>
+                </section>
 
-                <!-- Test Options -->
-                <div class="section-title">Mental Health Assessments <span>Choose your test</span></div>
-                <div class="test-grid">
-                    <div class="test-card">
-                        <div class="test-card-icon">⚡</div>
-                        <h3>Quick Check-In</h3>
-                        <p>A fast 5-question screening that gives you an immediate snapshot of your current mental
-                            state. Perfect for daily monitoring.</p>
-                        <div class="test-card-meta">
-                            <span class="tag">5 Questions</span>
-                            <span>•</span>
-                            <span>~3 minutes</span>
-                        </div>
-                        <a href="/test?mode=quick" class="btn btn-primary btn-sm">Start Quick Test →</a>
-                    </div>
-                    <div class="test-card">
-                        <div class="test-card-icon">🔬</div>
-                        <h3>Full Assessment</h3>
-                        <p>A comprehensive 10-question evaluation covering stress, anxiety, sleep quality, and social
-                            well-being for deeper insights.</p>
-                        <div class="test-card-meta">
-                            <span class="tag">10 Questions</span>
-                            <span>•</span>
-                            <span>~7 minutes</span>
-                        </div>
-                        <a href="/test?mode=full" class="btn btn-outline btn-sm">Start Full Test →</a>
-                    </div>
-                </div>
-
-                <!-- Tips section -->
-                <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:28px;"
-                    id="tips">
-                    <div class="section-title">Daily Mental Health Tips 💡</div>
-                    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:16px;" id="tipsGrid">
-                        <!-- Filled dynamically -->
-                    </div>
-                </div>
-
+                <section class="chart-container" style="padding:18px;">
+                    <div class="section-head"><span class="icon-24"><i data-lucide="lightbulb"></i></span>Daily Tips</div>
+                    <div class="tips-grid" id="tipsGrid"></div>
+                </section>
             </div>
-        </main>
+        </div>
+    </main>
+</div>
+
+<button id="chatFab" class="chat-fab" type="button" aria-label="Open chat assistant">
+    <img src="/static/favicon.svg" alt="MindSense Assistant">
+</button>
+
+<div id="chatOverlay" class="chat-overlay"></div>
+
+<section id="chatPanel" class="chat-panel" aria-label="MindSense Chat Assistant">
+    <div class="chat-head">
+        <div class="chat-title"><span class="icon-16"><i data-lucide="sparkles"></i></span>MindSense Assistant</div>
+        <button type="button" class="btn btn-outline btn-sm" id="chatCloseBtn">Close</button>
     </div>
+    <div id="chatBody" class="chat-body">
+        <div class="chat-bubble bot">Hi! I can help with app features and basic mental wellness tips. How can I help today?</div>
+    </div>
+    <form id="chatForm" class="chat-input-wrap">
+        <input id="chatInput" class="chat-input" type="text" maxlength="600" placeholder="Ask a question..." required>
+        <button class="btn btn-primary btn-sm" type="submit">Send</button>
+    </form>
+</section>
 
-    <script>
-        // Date display
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('todayDate').textContent = dateStr;
-        document.getElementById('currentDate').textContent = dateStr;
+<script>
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('currentDate').textContent = dateStr;
 
-        // Hour-based greeting emoji
-        const hour = now.getHours();
-        const emoji = hour < 12 ? '🌅' : hour < 17 ? '🌤️' : hour < 20 ? '🌇' : '🌙';
-        document.getElementById('welcomeEmoji').textContent = emoji;
+    const quotes = [
+        'Your progress does not need to be perfect to be meaningful.',
+        'Take care of your mind the same way you take care of your grades.',
+        'Rest is productive when your brain needs recovery.',
+        'One calm breath can reset an overwhelming moment.',
+        'Consistency in small habits beats intensity once in a while.'
+    ];
+    document.getElementById('motivationQuote').textContent = quotes[Math.floor(now.getTime() / 86400000) % quotes.length];
 
-        // Mood selection with backend integration
-        function selectMood(btn, mood) {
-            // Check if already logged today
-            if (btn.hasAttribute('disabled')) {
-                return; // Don't allow if buttons are disabled
+    const moodMetaMap = {
+        Amazing: { label: 'Amazing', icon: 'laugh' },
+        Good: { label: 'Good', icon: 'smile' },
+        Okay: { label: 'Okay', icon: 'meh' },
+        Stressed: { label: 'Stressed', icon: 'alarm-clock' },
+        Anxious: { label: 'Anxious', icon: 'triangle-alert' },
+        Sad: { label: 'Sad', icon: 'cloud-rain' },
+        '😊': { label: 'Good', icon: 'smile' },
+        '😐': { label: 'Okay', icon: 'meh' },
+        '😰': { label: 'Stressed', icon: 'alarm-clock' },
+        '😢': { label: 'Sad', icon: 'cloud-rain' },
+        '😤': { label: 'Stressed', icon: 'alarm-clock' }
+    };
+
+    function getMoodMeta(value) {
+        return moodMetaMap[value] || { label: 'Mood', icon: 'activity' };
+    }
+
+    function selectMood(btn, mood) {
+        if (btn.hasAttribute('disabled')) return;
+        document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        const messages = {
+            'Amazing': "That's wonderful. Keep your positive momentum.",
+            'Good': "Great to hear. Keep your healthy routine steady.",
+            'Okay': "That is valid. A short break can help reset your day.",
+            'Stressed': "Try deep breathing for two minutes and reset.",
+            'Anxious': "Take one task at a time and slow your pace.",
+            'Sad': "Consider reaching out to someone you trust today."
+        };
+
+        const msgBox = document.getElementById('moodMessage');
+        msgBox.textContent = messages[mood];
+        msgBox.style.display = 'block';
+
+        fetch('/api/record-mood', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mood: mood })
+        })
+        .then(resp => resp.json())
+        .then(data => {
+            if (data.success) {
+                msgBox.innerHTML = `<strong>Saved:</strong> ${data.message}`;
+                disableMoodButtons();
+                loadMoodHistory();
+                loadMoodStats();
+            } else if (data.error === 'already_logged') {
+                msgBox.innerHTML = `<strong>Info:</strong> ${data.message}`;
+                disableMoodButtons();
+                loadMoodHistory();
+                loadMoodStats();
+            } else {
+                msgBox.textContent = 'Error recording mood. Please try again.';
             }
-            
-            // Update UI
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            
-            const messages = {
-                'Amazing': "That's wonderful! 🌟 Keep riding that positive energy!",
-                'Good': "Great to hear! 😊 A good day is a gift — make the most of it!",
-                'Okay': "That's perfectly fine. 🌤️ Consider taking a short walk or break.",
-                'Stressed': "I hear you. 😟 Try deep breathing for 5 minutes — it helps!",
-                'Anxious': "It's okay to feel anxious. 💙 Take one thing at a time.",
-                'Sad': "I'm sorry you're feeling this way. 💛 Consider talking to someone you trust."
-            };
-            
-            const msgBox = document.getElementById('moodMessage');
-            msgBox.textContent = messages[mood];
-            msgBox.style.display = 'block';
-            
-            // Save to backend
-            fetch('/api/record-mood', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ mood: mood })
-            })
-            .then(resp => resp.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Mood recorded:', mood);
-                    // Show success message
-                    msgBox.innerHTML = `<strong style="color: #6c63ff;">✓ ${data.message}</strong><br>${messages[mood]}`;
-                    // Disable mood buttons for rest of day
-                    disableMoodButtons();
-                    // Load updated history
-                    loadMoodHistory();
-                    loadMoodStats();
-                } else if (data.error === 'already_logged') {
-                    // Already logged today
-                    msgBox.innerHTML = `<strong style="color: #ff9800;">ℹ️ ${data.message}</strong><br>Your mood today: <strong>${data.today_mood}</strong><br>(You can log again tomorrow)`;
-                    msgBox.style.background = 'rgba(255, 152, 0, 0.15)';
-                    msgBox.style.borderColor = 'rgba(255, 152, 0, 0.3)';
-                    // Disable mood buttons
-                    disableMoodButtons();
-                    // Load updated history
-                    loadMoodHistory();
-                    loadMoodStats();
-                } else {
-                    console.error('Error recording mood:', data.error);
-                    msgBox.textContent = 'Error recording mood. Please try again.';
-                    msgBox.style.background = 'rgba(244, 67, 54, 0.15)';
-                    msgBox.style.borderColor = 'rgba(244, 67, 54, 0.3)';
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                msgBox.textContent = 'Error connecting to server.';
-            });
-        }
-
-        // Disable mood buttons after logging
-        function disableMoodButtons() {
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                btn.setAttribute('disabled', 'disabled');
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-                btn.style.pointerEvents = 'none';
-            });
-        }
-
-        // Check if already logged today and disable buttons if needed
-        function checkAndDisableMoodButtonsIfNeeded() {
-            fetch('/api/mood-history')
-            .then(resp => resp.json())
-            .then(data => {
-                if (data.moods && data.moods.length > 0) {
-                    // Check if most recent mood is from today
-                    const latestMood = data.moods[0];
-                    const latestDate = new Date(latestMood.created_at).toDateString();
-                    const today = new Date().toDateString();
-                    
-                    if (latestDate === today) {
-                        // Already logged today - disable buttons
-                        disableMoodButtons();
-                        const msgBox = document.getElementById('moodMessage');
-                        msgBox.innerHTML = `<strong style="color: #ff9800;">ℹ️ You have already logged your mood today.</strong><br>Your mood: <strong>${latestMood.mood}</strong><br>(You can log again tomorrow)`;
-                        msgBox.style.display = 'block';
-                        msgBox.style.background = 'rgba(255, 152, 0, 0.15)';
-                        msgBox.style.borderColor = 'rgba(255, 152, 0, 0.3)';
-                    }
-                }
-            })
-            .catch(err => console.error('Error checking mood status:', err));
-        }
-
-        // Load and display mood history
-        function loadMoodHistory() {
-            fetch('/api/mood-history')
-            .then(resp => resp.json())
-            .then(data => {
-                const historyContainer = document.getElementById('moodHistory');
-                if (historyContainer && data.moods && data.moods.length > 0) {
-                    const moodEmojis = {
-                        'Amazing': '😄',
-                        'Good': '😊',
-                        'Okay': '😐',
-                        'Stressed': '😟',
-                        'Anxious': '😰',
-                        'Sad': '😢'
-                    };
-                    
-                    if (!historyContainer.innerHTML.includes('mood-history-list')) {
-                        historyContainer.innerHTML = `
-                            <div style="margin-top:20px; padding:15px; background:rgba(108,99,255,0.08); border-radius:10px;">
-                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin-bottom:10px;">Recent Check-ins (Last 7 Days)</div>
-                                <div id="mood-history-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-                            </div>
-                        `;
-                    }
-                    
-                    const list = document.getElementById('mood-history-list');
-                    list.innerHTML = data.moods.slice(0, 10).map(m => {
-                        const date = new Date(m.created_at).toLocaleDateString();
-                        const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                        const emoji = moodEmojis[m.mood] || '😐';
-                        return `<div style="background:rgba(255,255,255,0.08); padding:8px 12px; border-radius:8px; font-size:0.8rem;">${emoji} ${m.mood} <br/><span style="color:var(--text-secondary); font-size:0.75rem;">${date} ${time}</span></div>`;
-                    }).join('');
-                }
-            })
-            .catch(err => console.error('Error loading mood history:', err));
-        }
-
-        // Load mood statistics for personalization
-        function loadMoodStats() {
-            fetch('/api/mood-stats')
-            .then(resp => resp.json())
-            .then(data => {
-                // Personalize tips based on mood distribution
-                if (data.mood_distribution) {
-                    const stressIndicators = ['Stressed', 'Anxious', 'Sad'];
-                    const stressCount = stressIndicators.reduce((sum, mood) => sum + (data.mood_distribution[mood] || 0), 0);
-                    
-                    // If user has logged stressed moods, show wellness tips
-                    if (stressCount > 0) {
-                        const stressMsg = document.createElement('div');
-                        stressMsg.style.cssText = 'padding:12px; background:rgba(255,193,7,0.15); border-left:4px solid #ffc107; margin-bottom:15px; border-radius:4px; font-size:0.9rem; color:var(--text-primary);';
-                        stressMsg.textContent = `👋 We noticed some stressed moods this week. Check out our wellness tips below for support!`;
-                        const tipsSection = document.querySelector('[id*="tips"]');
-                        if (tipsSection && !document.querySelector('[id*="stress-msg"]')) {
-                            stressMsg.id = 'stress-msg';
-                            tipsSection.parentNode.insertBefore(stressMsg, tipsSection);
-                        }
-                    }
-                }
-            })
-            .catch(err => console.error('Error loading mood stats:', err));
-        }
-
-        // Load mood history and stats on page load
-        loadMoodHistory();
-        loadMoodStats();
-        checkAndDisableMoodButtonsIfNeeded();
-
-        // Daily tips
-        const tips = [
-            { icon: '🌿', title: 'Breathe Deeply', text: 'Take 5 deep breaths every hour to reduce cortisol levels.' },
-            { icon: '💤', title: 'Sleep 7-9 Hours', text: 'Quality sleep is the foundation of good mental health.' },
-            { icon: '🚶', title: 'Move Your Body', text: 'Even 20 mins of walking releases mood-boosting endorphins.' },
-            { icon: '📵', title: 'Digital Detox', text: 'Try 30 minutes off screens before bed for better sleep.' },
-            { icon: '📝', title: 'Journal It Out', text: 'Writing your thoughts helps process emotions and reduce stress.' },
-            { icon: '🤝', title: 'Stay Connected', text: 'Social bonds are a powerful protector against depression.' },
-        ];
-
-        const grid = document.getElementById('tipsGrid');
-        tips.forEach(tip => {
-            grid.innerHTML += `
-      <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px; transition:all 0.3s ease;"
-           onmouseover="this.style.borderColor='rgba(108,99,255,0.3)'; this.style.transform='translateY(-3px)'"
-           onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.transform='translateY(0)'">
-        <div style="font-size:1.8rem; margin-bottom:10px;">${tip.icon}</div>
-        <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin-bottom:6px;">${tip.title}</div>
-        <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">${tip.text}</div>
-      </div>
-    `;
+        })
+        .catch(() => {
+            msgBox.textContent = 'Error connecting to server.';
         });
-    </script>
+    }
 
+    function disableMoodButtons() {
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.setAttribute('disabled', 'disabled');
+            btn.style.opacity = '0.6';
+            btn.style.pointerEvents = 'none';
+        });
+    }
+
+    function checkAndDisableMoodButtonsIfNeeded() {
+        fetch('/api/mood-history')
+        .then(resp => resp.json())
+        .then(data => {
+            if (data.moods && data.moods.length > 0) {
+                const latestMood = data.moods[0];
+                const latestDate = new Date(latestMood.created_at).toDateString();
+                const today = new Date().toDateString();
+                if (latestDate === today) {
+                    disableMoodButtons();
+                    const msgBox = document.getElementById('moodMessage');
+                    const moodMeta = getMoodMeta(latestMood.mood);
+                    msgBox.innerHTML = `<strong>Info:</strong> You already logged today: <span class="icon-16" style="display:inline-flex;vertical-align:middle;"><i data-lucide="${moodMeta.icon}"></i></span> ${moodMeta.label}`;
+                    msgBox.style.display = 'block';
+                    lucide.createIcons();
+                }
+            }
+        })
+        .catch(() => {});
+    }
+
+    function loadMoodHistory() {
+        fetch('/api/mood-history')
+        .then(resp => resp.json())
+        .then(data => {
+            const historyContainer = document.getElementById('moodHistory');
+            if (historyContainer && data.moods && data.moods.length > 0) {
+                if (!historyContainer.innerHTML.includes('mood-history-list')) {
+                    historyContainer.innerHTML = '<div class="history-box"><div style="font-weight:700;margin-bottom:8px;">Recent Check-ins</div><div id="mood-history-list" class="history-tags"></div></div>';
+                }
+                const list = document.getElementById('mood-history-list');
+                list.innerHTML = data.moods.slice(0, 10).map(m => {
+                    const date = new Date(m.created_at).toLocaleDateString();
+                    const moodMeta = getMoodMeta(m.mood);
+                    return `<div class="history-tag"><span class="icon-16" style="display:inline-flex;vertical-align:middle;"><i data-lucide="${moodMeta.icon}"></i></span> ${moodMeta.label}<br><span style="color:var(--text-muted);">${date}</span></div>`;
+                }).join('');
+                lucide.createIcons();
+            }
+        })
+        .catch(() => {});
+    }
+
+    function loadMoodStats() {
+        fetch('/api/mood-stats')
+        .then(resp => resp.json())
+        .then(() => {})
+        .catch(() => {});
+    }
+
+    const chatFab = document.getElementById('chatFab');
+    const chatOverlay = document.getElementById('chatOverlay');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatCloseBtn = document.getElementById('chatCloseBtn');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatBody = document.getElementById('chatBody');
+    const chatHistory = [];
+
+    function escapeHtml(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function decodeEscapedUnicode(text) {
+        return String(text || '').replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+            String.fromCharCode(parseInt(hex, 16))
+        );
+    }
+
+    function renderInlineMarkdown(text) {
+        return escapeHtml(text)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>');
+    }
+
+    function formatAiText(rawText) {
+        const normalized = decodeEscapedUnicode(rawText).replace(/\r\n/g, '\n').trim();
+        if (!normalized) return '<p class="ai-paragraph">No response available.</p>';
+
+        const lines = normalized.split('\n').map(line => line.trim()).filter(Boolean);
+        const bulletRegex = /^(?:[-*•]\s+|\d+\.\s+)/;
+
+        let html = '';
+        let listOpen = false;
+
+        for (const line of lines) {
+            const isBullet = bulletRegex.test(line);
+            const cleaned = line.replace(bulletRegex, '');
+            const rendered = renderInlineMarkdown(cleaned);
+
+            if (isBullet) {
+                if (!listOpen) {
+                    html += '<ul class="ai-list">';
+                    listOpen = true;
+                }
+                html += `<li>${rendered}</li>`;
+            } else {
+                if (listOpen) {
+                    html += '</ul>';
+                    listOpen = false;
+                }
+                html += `<p class="ai-paragraph">${rendered}</p>`;
+            }
+        }
+
+        if (listOpen) html += '</ul>';
+        return html;
+    }
+
+    function openChat() {
+        chatOverlay.classList.add('open');
+        chatPanel.classList.add('open');
+        chatInput.focus();
+    }
+
+    function closeChat() {
+        chatOverlay.classList.remove('open');
+        chatPanel.classList.remove('open');
+    }
+
+    function addChatBubble(role, content) {
+        const el = document.createElement('div');
+        el.className = `chat-bubble ${role}`;
+        if (role === 'bot') {
+            el.innerHTML = formatAiText(content);
+        } else {
+            el.textContent = content;
+        }
+        chatBody.appendChild(el);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendChatMessage(text) {
+        addChatBubble('user', text);
+        chatHistory.push({ role: 'user', content: text });
+
+        const thinking = document.createElement('div');
+        thinking.className = 'chat-bubble bot';
+        thinking.textContent = 'Thinking...';
+        chatBody.appendChild(thinking);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, history: chatHistory.slice(-8) })
+            });
+            const data = await res.json();
+            thinking.remove();
+            const reply = data.reply || data.error || 'Sorry, I could not answer right now.';
+            addChatBubble('bot', reply);
+            chatHistory.push({ role: 'assistant', content: reply });
+        } catch (_) {
+            thinking.remove();
+            addChatBubble('bot', 'Unable to connect right now. Please try again.');
+        }
+    }
+
+    chatFab.addEventListener('click', openChat);
+    chatOverlay.addEventListener('click', closeChat);
+    chatCloseBtn.addEventListener('click', closeChat);
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = (chatInput.value || '').trim();
+        if (!text) return;
+        chatInput.value = '';
+        await sendChatMessage(text);
+    });
+
+    const tips = [
+        { title: 'Breathe Deeply', text: 'Take 5 deep breaths every hour to reduce tension.' },
+        { title: 'Sleep 7-9 Hours', text: 'Quality sleep is a foundation for mental balance.' },
+        { title: 'Move Your Body', text: 'Even 20 minutes of walking can improve mood.' },
+        { title: 'Digital Break', text: 'Take 30 minutes off screens before bedtime.' },
+        { title: 'Journal Briefly', text: 'Write your thoughts for clarity and calm.' },
+        { title: 'Stay Connected', text: 'Check in with a friend or classmate regularly.' }
+    ];
+
+    const grid = document.getElementById('tipsGrid');
+    tips.forEach(tip => {
+        grid.innerHTML += `
+            <article class="tip-card">
+                <div class="tip-title">${tip.title}</div>
+                <div class="tip-copy">${tip.text}</div>
+            </article>
+        `;
+    });
+
+    document.getElementById('accountToggle').addEventListener('click', () => {
+        document.getElementById('accountMenu').classList.toggle('open');
+    });
+
+    lucide.createIcons();
+    loadMoodHistory();
+    loadMoodStats();
+    checkAndDisableMoodButtonsIfNeeded();
+</script>
+<script src="/static/theme.js"></script>
 </body>
-
 </html>

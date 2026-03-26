@@ -1,651 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your test history and mental health trends">
     <title>History — MindSense</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="shortcut icon" href="/static/favicon.svg">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Enhanced History Page Styling */
-        .main-header {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15) 0%, rgba(253, 121, 168, 0.1) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
-            animation: slideDown 0.6s ease;
-        }
-
-        .main-header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: radial-gradient(ellipse at top right, rgba(108, 99, 255, 0.12), transparent),
-                        var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 28px;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            backdrop-filter: blur(20px);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .stat-card:hover::before {
-            left: 100%;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(108, 99, 255, 0.5);
-            box-shadow: 0 12px 40px rgba(108, 99, 255, 0.2);
-        }
-
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--accent-color, var(--primary));
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-        }
-
-        .stat-card:hover::after {
-            opacity: 1;
-        }
-
-        .stat-card-icon {
-            font-size: 2rem;
-            filter: drop-shadow(0 4px 12px rgba(108, 99, 255, 0.3));
-        }
-
-        .stat-card-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 12px 0;
-        }
-
-        /* Chart Containers */
-        .chart-container {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(0, 206, 201, 0.05) 100%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 32px;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart-container::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(108, 99, 255, 0.5), transparent);
-        }
-
-        .chart-container:hover {
-            border-color: rgba(108, 99, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.15);
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Test Table Styling */
-        table {
-            backdrop-filter: blur(10px);
-        }
-
-        tbody tr {
-            transition: all 0.3s ease;
-            background: transparent;
-        }
-
-        tbody tr:hover {
-            background: rgba(108, 99, 255, 0.08) !important;
-            transform: translateX(4px);
-        }
-
-        thead th {
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        /* Charts Grid */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        canvas {
-            transition: opacity 0.3s ease;
-        }
-
-        .main-body > div:has(.section-title) {
-            animation: fadeUp 0.6s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* No Tests Message Enhancement */
-        #noTestsMessage {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.05), rgba(253, 121, 168, 0.05));
-            border-radius: 20px;
-            padding: 60px 40px;
-        }
-
-        #noTestsMessage p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-    </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
 <body>
-
-    <div class="dashboard-layout">
-
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-icon">🧠</div>
-                <div class="sidebar-brand-text">
-                    MindSense
-                    <span>Student Portal</span>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-section-title">Main</div>
-                <a href="/student-dashboard" class="sidebar-link">
-                    <span class="link-icon">🏠</span> Dashboard
-                </a>
-                <a href="/test" class="sidebar-link">
-                    <span class="link-icon">🧪</span> Take a Test
-                </a>
-                <a href="/history" class="sidebar-link active">
-                    <span class="link-icon">📈</span> History
-                </a>
-
-                <div class="sidebar-section-title">Wellness</div>
-                <a href="/resources" class="sidebar-link">
-                    <span class="link-icon">📚</span> Resources
-                </a>
-                <a href="/daily-tips" class="sidebar-link">
-                    <span class="link-icon">💡</span> Daily Tips
-                </a>
-
-                <div class="sidebar-section-title">Account</div>
-                <a href="/logout" class="sidebar-link logout">
-                    <span class="link-icon">🚪</span> Logout
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="avatarInitial">
-                        {{ session['user'][0].upper() }}
-                    </div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUsername">{{ session['name'] if session.get('name')
-                            else session['user'] }}</div>
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+            <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
+        </a>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-title">Main</div>
+            <a href="/student-dashboard" class="sidebar-link"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+            <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+            <a href="/history" class="sidebar-link active"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+            <a href="/analytics" class="sidebar-link"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+            <div class="sidebar-section-title">Wellness</div>
+            <a href="/resources" class="sidebar-link"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+            <a href="/daily-tips" class="sidebar-link"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="account-card" id="accountToggle" type="button">
+                <div class="left">
+                    <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+                    <div>
+                        <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
                         <div class="sidebar-user-role">Student</div>
                     </div>
                 </div>
+                <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+            </button>
+            <div class="account-popover" id="accountMenu">
+                <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-header-title">
+                <h1>History</h1>
+                <p>Your mental health trends over time</p>
+            </div>
+            <a href="/test" class="btn btn-primary btn-sm">Start New Test</a>
+        </div>
 
-            <!-- Header bar -->
-            <div class="main-header">
-                <div class="main-header-title">
-                    <h1>📈 Test History</h1>
-                    <p>Your mental health journey and progress over time</p>
-                </div>
-                <a href="/test" class="btn btn-primary btn-sm">+ New Test</a>
+        <div class="main-body">
+            <div class="stats-grid" style="margin-bottom:20px;">
+                <div class="stat-card"><div id="totalTests" style="font-size:1.7rem;font-weight:800;">0</div><div class="stat-card-label">Total Tests</div></div>
+                <div class="stat-card"><div id="avgScore" style="font-size:1.7rem;font-weight:800;">—</div><div class="stat-card-label">Average Score</div></div>
+                <div class="stat-card"><div id="bestScore" style="font-size:1.7rem;font-weight:800;">—</div><div class="stat-card-label">Best Score</div></div>
+                <div class="stat-card"><div id="lastDate" style="font-size:1.2rem;font-weight:800;">—</div><div class="stat-card-label">Most Recent</div></div>
             </div>
 
-            <div class="main-body">
-
-                <!-- Stats Overview -->
-                <div class="stats-grid">
-                    <div class="stat-card green">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">📊</span>
-                            <span class="stat-card-badge">Total</span>
-                        </div>
-                        <div class="stat-card-value" id="totalTests">0</div>
-                        <div class="stat-card-label">Tests Completed</div>
-                    </div>
-                    <div class="stat-card pink">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">📉</span>
-                            <span class="stat-card-badge">Average</span>
-                        </div>
-                        <div class="stat-card-value" id="avgScore">—</div>
-                        <div class="stat-card-label">Average Score</div>
-                    </div>
-                    <div class="stat-card teal">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">🎯</span>
-                            <span class="stat-card-badge">Best</span>
-                        </div>
-                        <div class="stat-card-value" id="bestScore">—</div>
-                        <div class="stat-card-label">Best Score</div>
-                    </div>
-                    <div class="stat-card orange">
-                        <div class="stat-card-top">
-                            <span class="stat-card-icon">⏰</span>
-                            <span class="stat-card-badge">Recent</span>
-                        </div>
-                        <div class="stat-card-value" id="lastDate">—</div>
-                        <div class="stat-card-label">Most Recent</div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="charts-grid">
-                    <!-- Pie Chart: Status Distribution -->
-                    <div class="chart-container">
-                        <div class="section-title">Status Distribution 📊</div>
-                        <div style="position: relative; height: 280px;">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Bar Chart: Category Distribution -->
-                    <div class="chart-container">
-                        <div class="section-title">Category Breakdown 📈</div>
-                        <div style="position: relative; height: 280px;">
-                            <canvas id="categoryChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Line Chart: Score Trend -->
-                <div class="chart-container" style="margin-bottom: 32px;">
-                    <div class="section-title">Score Trend Over Time 📉</div>
-                    <div style="position: relative; height: 320px;">
-                        <canvas id="trendChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Test History Table -->
+            <div class="history-chart-grid" style="margin-bottom:16px;">
                 <div class="chart-container">
-                    <div class="section-title">All Tests 📋</div>
-                    
-                    <div id="noTestsMessage" style="text-align:center;">
-                        <div style="font-size:3rem; margin-bottom:16px;">📭</div>
-                        <p>No tests taken yet. <a href="/test" style="color:var(--primary); text-decoration:none; font-weight:600; transition: all 0.3s ease;">Take your first test</a> to start tracking your mental health!</p>
-                    </div>
-
-                    <div id="testsList" style="display:none;">
-                        <div style="overflow-x:auto;">
-                            <table style="width:100%; border-collapse:collapse;">
-                                <thead>
-                                    <tr style="border-bottom:2px solid var(--glass-border);">
-                                        <th style="padding:16px; text-align:left; color:var(--primary-light);">DATE</th>
-                                        <th style="padding:16px; text-align:left; color:var(--primary-light);">SCORE</th>
-                                        <th style="padding:16px; text-align:left; color:var(--primary-light);">STATUS</th>
-                                        <th style="padding:16px; text-align:left; color:var(--primary-light);">TREND</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="testsTable">
-                                    <!-- Filled by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <div class="history-section-title"><span class="history-title-icon icon-24"><i data-lucide="pie-chart"></i></span><span>Status Distribution</span></div>
+                    <div style="height:280px;"><canvas id="statusChart"></canvas></div>
                 </div>
-
+                <div class="chart-container">
+                    <div class="history-section-title"><span class="history-title-icon icon-24"><i data-lucide="bar-chart-3"></i></span><span>Category Breakdown</span></div>
+                    <div style="height:280px;"><canvas id="categoryChart"></canvas></div>
+                </div>
             </div>
-        </main>
-    </div>
 
-    <script>
-        let statusChart, categoryChart, trendChart;
+            <div class="chart-container" style="margin-bottom:16px;">
+                <div class="history-section-title"><span class="history-title-icon icon-24"><i data-lucide="chart-line"></i></span><span>Score Trend</span></div>
+                <div style="height:320px;"><canvas id="trendChart"></canvas></div>
+            </div>
 
-        // Fetch test history from server
-        async function loadTestHistory() {
-            try {
-                const response = await fetch('/api/test-history', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to load history');
-                const data = await response.json();
-
-                if (data.tests.length === 0) {
-                    document.getElementById('noTestsMessage').style.display = 'block';
-                    document.getElementById('testsList').style.display = 'none';
-                    return;
-                }
-
-                document.getElementById('noTestsMessage').style.display = 'none';
-                document.getElementById('testsList').style.display = 'block';
-
-                const tests = data.tests;
-
-                // ===== STATS CARDS =====
-                document.getElementById('totalTests').textContent = tests.length;
-                document.getElementById('lastDate').textContent = tests[0].date.split(' ')[0];
-
-                const scores = tests.map(t => t.total_score);
-                const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-                document.getElementById('avgScore').textContent = avgScore;
-                document.getElementById('bestScore').textContent = Math.min(...scores);
-
-                // ===== CATEGORY SETUP =====
-                const categoryData = {
-                    'Excellent Mental Well-being': { emoji: '✅', color: '#00b894' },
-                    'Moderate Stress Detected': { emoji: '⚠️', color: '#fdcb6e' },
-                    'High Stress & Anxiety': { emoji: '🔴', color: '#e17055' },
-                    'Severe Distress Detected': { emoji: '🚨', color: '#d63031' }
-                };
-
-                // Count categories
-                const categories = {};
-                tests.forEach(t => {
-                    categories[t.result] = (categories[t.result] || 0) + 1;
-                });
-
-                // ===== PIE CHART: STATUS DISTRIBUTION =====
-                const pieLabels = Object.keys(categories);
-                const pieData = Object.values(categories);
-                const pieColors = pieLabels.map(cat => categoryData[cat].color);
-
-                const pieCtx = document.getElementById('statusChart').getContext('2d');
-                statusChart = new Chart(pieCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: pieLabels.map(cat => cat.split(' ').slice(0, 2).join(' ')),
-                        datasets: [{
-                            data: pieData,
-                            backgroundColor: pieColors,
-                            borderColor: 'rgba(255,255,255,0.15)',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: 'rgba(255,255,255,0.75)',
-                                    padding: 20,
-                                    font: { size: 13, weight: '500' },
-                                    usePointStyle: true,
-                                    pointStyle: 'circle'
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                padding: 12,
-                                titleFont: { size: 13, weight: 'bold' },
-                                bodyFont: { size: 12 },
-                                borderColor: 'rgba(108, 99, 255, 0.5)',
-                                borderWidth: 1,
-                                displayColors: true,
-                                callbacks: {
-                                    label: function(context) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const pct = ((context.parsed / total) * 100).toFixed(1);
-                                        return context.label + ': ' + context.parsed + ' (' + pct + '%)';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // ===== BAR CHART: CATEGORY BREAKDOWN =====
-                const barCtx = document.getElementById('categoryChart').getContext('2d');
-                categoryChart = new Chart(barCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(categories).map(cat => cat.split(' ')[0]),
-                        datasets: [{
-                            label: 'Test Count',
-                            data: Object.values(categories),
-                            backgroundColor: Object.keys(categories).map(cat => categoryData[cat].color),
-                            borderColor: Object.keys(categories).map(cat => categoryData[cat].color),
-                            borderWidth: 0,
-                            borderRadius: 12,
-                            borderSkipped: false
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                padding: 12,
-                                titleFont: { size: 13, weight: 'bold' },
-                                bodyFont: { size: 12 },
-                                borderColor: 'rgba(108, 99, 255, 0.5)',
-                                borderWidth: 1
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 12 } },
-                                grid: { color: 'rgba(255,255,255,0.05)' },
-                                beginAtZero: true
-                            },
-                            y: {
-                                ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 12, weight: '500' } },
-                                grid: { display: false }
-                            }
-                        }
-                    }
-                });
-
-                // ===== LINE CHART: SCORE TREND =====
-                const reversedTests = [...tests].reverse();
-                const trendCtx = document.getElementById('trendChart').getContext('2d');
-                trendChart = new Chart(trendCtx, {
-                    type: 'line',
-                    data: {
-                        labels: reversedTests.map((t, idx) => {
-                            const date = new Date(t.date);
-                            return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-                        }),
-                        datasets: [{
-                            label: 'Test Score',
-                            data: reversedTests.map(t => t.total_score),
-                            borderColor: '#6c5ce7',
-                            backgroundColor: 'rgba(108, 92, 231, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 6,
-                            pointBackgroundColor: '#6c5ce7',
-                            pointBorderColor: 'rgba(255,255,255,0.9)',
-                            pointBorderWidth: 2.5,
-                            pointHoverRadius: 8,
-                            pointHoverBackgroundColor: '#a29bfe',
-                            pointHoverBorderWidth: 3
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                                padding: 14,
-                                titleFont: { size: 13, weight: 'bold' },
-                                bodyFont: { size: 12 },
-                                borderColor: 'rgba(108, 99, 255, 0.5)',
-                                borderWidth: 1.5,
-                                displayColors: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 40,
-                                ticks: { 
-                                    color: 'rgba(255,255,255,0.6)',
-                                    stepSize: 10,
-                                    font: { size: 12 }
-                                },
-                                grid: { 
-                                    color: 'rgba(255,255,255,0.08)',
-                                    drawBorder: false
-                                }
-                            },
-                            x: {
-                                ticks: { 
-                                    color: 'rgba(255,255,255,0.6)',
-                                    font: { size: 12 }
-                                },
-                                grid: { 
-                                    color: 'rgba(255,255,255,0.05)',
-                                    drawBorder: false
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // ===== TEST TABLE =====
-                const tbody = document.getElementById('testsTable');
-                tests.forEach((test, idx) => {
-                    const date = new Date(test.date);
-                    const dateStr = date.toLocaleDateString('en-IN');
-                    
-                    let trend = '→';
-                    let trendColor = '#636e72';
-                    if (idx < tests.length - 1) {
-                        const prevScore = tests[idx + 1].total_score;
-                        if (test.total_score < prevScore) {
-                            trend = '📉 Improving';
-                            trendColor = '#00b894';
-                        } else if (test.total_score > prevScore) {
-                            trend = '📈 Worsened';
-                            trendColor = '#e17055';
-                        } else {
-                            trend = '➡️ Same';
-                        }
-                    }
-
-                    const statusColor = categoryData[test.result].color;
-                    const emoji = categoryData[test.result].emoji;
-
-                    tbody.innerHTML += `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:all 0.3s ease;">
-                            <td style="padding:16px; color:var(--text-secondary); font-size:0.95rem; font-weight:500;">${dateStr}</td>
-                            <td style="padding:16px; color:var(--text-primary); font-weight:700; font-size:1rem;">${test.total_score}/40</td>
-                            <td style="padding:16px;">
-                                <span style="background:rgba(${hexToRgb(statusColor)}, 0.2); color:${statusColor}; padding:6px 14px; border-radius:10px; font-size:0.85rem; font-weight:600; border:1px solid rgba(${hexToRgb(statusColor)}, 0.3);">
-                                    ${emoji} ${test.result.split(' ')[0]}
-                                </span>
-                            </td>
-                            <td style="padding:16px; color:${trendColor}; font-size:0.9rem; font-weight:600;">${trend}</td>
+            <div class="chart-container">
+                <div class="history-section-title"><span class="history-title-icon icon-24"><i data-lucide="table"></i></span><span>All Assessments</span></div>
+                <div id="noTestsMessage" style="text-align:center;padding:30px 0;">No tests taken yet. <a href="/test" style="color:var(--primary);">Take your first test</a>.</div>
+                <div id="testsList" class="responsive-table-wrap" style="display:none;">
+                    <table class="responsive-table">
+                        <thead>
+                        <tr style="border-bottom:1px solid var(--glass-border)">
+                            <th style="text-align:left;padding:12px;">Date</th>
+                            <th style="text-align:left;padding:12px;">Score</th>
+                            <th style="text-align:left;padding:12px;">Status</th>
+                            <th style="text-align:left;padding:12px;">Trend</th>
                         </tr>
-                    `;
-                });
+                        </thead>
+                        <tbody id="testsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
 
-            } catch (error) {
-                console.error('Error loading test history:', error);
-                document.getElementById('noTestsMessage').innerHTML = '<div style="color:var(--danger);">Error loading test history. Please refresh the page.</div>';
+<style>
+    .history-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 2px 0 14px;
+        padding: 8px 12px;
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+        color: var(--text-primary);
+        font-size: 1.06rem;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+
+    .history-title-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--glass-border);
+        color: #66c2ff;
+        flex-shrink: 0;
+    }
+
+    .history-status-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid;
+        flex-shrink: 0;
+    }
+
+    .history-status-icon.excellent {
+        color: #22c55e;
+        border-color: rgba(34, 197, 94, 0.45);
+        background: rgba(34, 197, 94, 0.16);
+    }
+
+    .history-status-icon.moderate {
+        color: #facc15;
+        border-color: rgba(250, 204, 21, 0.45);
+        background: rgba(250, 204, 21, 0.16);
+    }
+
+    .history-status-icon.high,
+    .history-status-icon.severe {
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.45);
+        background: rgba(239, 68, 68, 0.16);
+    }
+
+    .history-chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    @media (max-width: 1023px) {
+        .history-chart-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+    }
+</style>
+
+<script>
+    let statusChart, categoryChart, trendChart;
+
+    async function loadTestHistory() {
+        try {
+            const response = await fetch('/api/test-history', { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            if (!response.ok) throw new Error('Failed to load history');
+            const data = await response.json();
+            const tests = data.tests || [];
+
+            document.getElementById('noTestsMessage').style.display = tests.length ? 'none' : 'block';
+            document.getElementById('testsList').style.display = tests.length ? 'block' : 'none';
+            document.getElementById('totalTests').textContent = tests.length;
+
+            if (tests.length > 0) {
+                document.getElementById('lastDate').textContent = tests[0].date.split(' ')[0];
+                const scores = tests.map(t => t.total_score);
+                document.getElementById('avgScore').textContent = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+                document.getElementById('bestScore').textContent = Math.min(...scores);
             }
+
+            const categoryData = {
+                'Excellent Mental Well-being': { icon: 'shield-check', color: '#10b981', cls: 'excellent' },
+                'Excellent': { icon: 'shield-check', color: '#10b981', cls: 'excellent' },
+                'Moderate Stress Detected': { icon: 'circle-alert', color: '#f59e0b', cls: 'moderate' },
+                'High Stress & Anxiety': { icon: 'triangle-alert', color: '#ef4444', cls: 'high' },
+                'Severe Distress Detected': { icon: 'siren', color: '#dc2626', cls: 'severe' }
+            };
+
+            const categories = {};
+            tests.forEach(t => { categories[t.result] = (categories[t.result] || 0) + 1; });
+
+            const pieLabels = Object.keys(categories);
+            const pieData = Object.values(categories);
+            const pieColors = pieLabels.map(cat => (categoryData[cat] || { color: '#76839a' }).color);
+
+            statusChart = new Chart(document.getElementById('statusChart').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                color: 'rgba(255,255,255,0.78)',
+                                boxWidth: 38,
+                                boxHeight: 14,
+                                padding: 12,
+                                usePointStyle: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            categoryChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categories).map(cat => cat.split(' ')[0]),
+                    datasets: [{ data: Object.values(categories), backgroundColor: Object.keys(categories).map(cat => (categoryData[cat] || { color: '#76839a' }).color), borderRadius: 8 }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const reversedTests = [...tests].reverse();
+            trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: reversedTests.map(t => new Date(t.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })),
+                    datasets: [{ data: reversedTests.map(t => t.total_score), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.20)', fill: true, tension: 0.35 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const tbody = document.getElementById('testsTable');
+            tests.forEach((test, idx) => {
+                const dateStr = new Date(test.date).toLocaleDateString('en-IN');
+                let trend = 'No change';
+                if (idx < tests.length - 1) {
+                    const prevScore = tests[idx + 1].total_score;
+                    if (test.total_score < prevScore) trend = 'Improving';
+                    else if (test.total_score > prevScore) trend = 'Increased';
+                }
+                const catMeta = (categoryData[test.result] || { icon: 'circle', cls: '' });
+                const icon = catMeta.icon;
+                tbody.innerHTML += `
+                    <tr style="border-bottom:1px solid var(--glass-border)">
+                        <td data-label="Date" style="padding:12px;">${dateStr}</td>
+                        <td data-label="Score" style="padding:12px;">${test.total_score}/40</td>
+                        <td data-label="Status" style="padding:12px;display:flex;align-items:center;gap:8px;"><span class="history-status-icon ${catMeta.cls}"><i data-lucide="${icon}"></i></span>${test.result}</td>
+                        <td data-label="Trend" style="padding:12px;">${trend}</td>
+                    </tr>`;
+            });
+
+            lucide.createIcons();
+        } catch {
+            document.getElementById('noTestsMessage').textContent = 'Error loading test history. Please refresh the page.';
         }
+    }
 
-        function hexToRgb(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 0, 0';
-        }
+    document.getElementById('accountToggle').addEventListener('click', () => {
+        document.getElementById('accountMenu').classList.toggle('open');
+    });
 
-        // Load on page load
-        loadTestHistory();
-    </script>
-
+    lucide.createIcons();
+    loadTestHistory();
+</script>
+<script src="/static/theme.js"></script>
 </body>
-
 </html>

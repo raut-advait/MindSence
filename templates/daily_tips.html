@@ -1,372 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Daily mental health tips and wellness advice">
     <title>Daily Tips — MindSense</title>
     <link rel="stylesheet" href="/static/style.css">
+        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+        <link rel="shortcut icon" href="/static/favicon.svg">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Enhanced Daily Tips Page Styling */
-        .main-header {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15) 0%, rgba(253, 121, 168, 0.1) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
-            animation: slideDown 0.6s ease;
+        .tips-shell {
+            display: grid;
+            gap: 16px;
+            max-width: 1260px;
+            margin: 0 auto;
         }
 
-        .main-header h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .tips-category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
         }
 
-        .section-title {
-            font-size: 1.4rem;
+        .tips-item {
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 14px;
+            background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+            min-height: 94px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .tips-item-title {
+            font-size: 1.02rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            color: var(--text-primary);
+            line-height: 1.25;
         }
 
-        .tip-of-day {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(253, 121, 168, 0.2));
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 24px;
-            animation: slideDown 0.6s ease;
-            transition: all 0.3s ease;
+        .tips-item-copy {
+            font-size: .9rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
         }
 
-        .tip-of-day:hover {
-            border-color: rgba(108, 99, 255, 0.4);
-            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.15);
+        .tips-of-day {
+            font-size: 1rem;
+            line-height: 1.55;
+            color: var(--text-secondary);
+            padding: 4px 2px 2px;
         }
 
-        .tip-category-section {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(0, 206, 201, 0.05) 100%);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 24px;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            animation: fadeUp 0.6s ease;
+        @media (max-width: 1023px) {
+            .tips-category-grid { grid-template-columns: 1fr; }
         }
 
-        .tip-category-section:hover {
-            border-color: rgba(108, 99, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.12);
+        @media (max-width: 767px) {
+            .main-body { padding: 14px !important; }
+            .tips-shell { gap: 14px; }
+            .tips-item { min-height: auto; padding: 12px; }
         }
 
-        .tip-item {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            animation: fadeSlideUp 0.6s ease;
-        }
-
-        .tip-item:hover {
-            transform: translateX(6px);
-            border-color: rgba(108, 99, 255, 0.3);
-            background: rgba(108, 99, 255, 0.08);
-            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.15);
-        }
-
-        .tip-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
+        @media (max-width: 479px) {
+            .tips-of-day { font-size: .92rem; }
         }
     </style>
 </head>
-
 <body>
-
-    <div class="dashboard-layout">
-
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-icon">🧠</div>
-                <div class="sidebar-brand-text">
-                    MindSense
-                    <span>Student Portal</span>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <div class="sidebar-section-title">Main</div>
-                <a href="/student-dashboard" class="sidebar-link">
-                    <span class="link-icon">🏠</span> Dashboard
-                </a>
-                <a href="/test" class="sidebar-link">
-                    <span class="link-icon">🧪</span> Take a Test
-                </a>
-                <a href="/history" class="sidebar-link">
-                    <span class="link-icon">📈</span> History
-                </a>
-
-                <div class="sidebar-section-title">Wellness</div>
-                <a href="/resources" class="sidebar-link">
-                    <span class="link-icon">📚</span> Resources
-                </a>
-                <a href="/daily-tips" class="sidebar-link active">
-                    <span class="link-icon">💡</span> Daily Tips
-                </a>
-
-                <div class="sidebar-section-title">Account</div>
-                <a href="/logout" class="sidebar-link logout">
-                    <span class="link-icon">🚪</span> Logout
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="avatarInitial">
-                        {{ session['user'][0].upper() }}
-                    </div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUsername">{{ session['name'] if session.get('name')
-                            else session['user'] }}</div>
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+            <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
+        </a>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-title">Main</div>
+            <a href="/student-dashboard" class="sidebar-link"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+            <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+            <a href="/history" class="sidebar-link"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+            <a href="/analytics" class="sidebar-link"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+            <div class="sidebar-section-title">Wellness</div>
+            <a href="/resources" class="sidebar-link"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+            <a href="/daily-tips" class="sidebar-link active"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="account-card" id="accountToggle" type="button">
+                <div class="left">
+                    <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+                    <div>
+                        <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
                         <div class="sidebar-user-role">Student</div>
                     </div>
                 </div>
+                <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+            </button>
+            <div class="account-popover" id="accountMenu">
+                <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
-
-            <!-- Header bar -->
-            <div class="main-header">
-                <div class="main-header-title">
-                    <h1>💡 Daily Wellness Tips</h1>
-                    <p>Science-backed advice to improve your mental health every day</p>
-                </div>
-                <a href="/test" class="btn btn-primary btn-sm">Take a Test</a>
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-header-title">
+                <h1>Daily Tips</h1>
+                <p>Actionable ideas for sleep, focus, stress, and resilience</p>
             </div>
+            <a href="/test" class="btn btn-primary btn-sm">Take Assessment</a>
+        </div>
 
-            <div class="main-body">
+        <div class="main-body">
+            <div class="tips-shell">
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="sparkles"></i></span>Tip of the Day</div>
+                <p id="tipsOfDay" class="tips-of-day"></p>
+            </section>
 
-                <!-- Tip of the Day -->
-                <div style="background:linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(253, 121, 168, 0.2)); border:1px solid var(--glass-border); border-radius:20px; padding:28px; margin-bottom:24px;">
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div style="font-size:4rem;">✨</div>
-                        <div>
-                            <div class="section-title" style="margin:0 0 8px 0;">Tip of the Day</div>
-                            <p id="tipsOfDay" style="color:var(--text-secondary); margin:0; font-size:0.95rem; line-height:1.6;"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tips Categories -->
-                <div>
-                    <div class="section-title">Mental Health Categories 🎯</div>
-                    
-                    <!-- Sleep & Rest -->
-                    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:24px; margin-top:20px;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                            <div style="font-size:2rem;">😴</div>
-                            <h3 style="margin:0; color:var(--text-primary);">Sleep & Rest</h3>
-                        </div>
-                        <div id="sleepTips" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-                            <!-- Filled by JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Stress Management -->
-                    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:24px; margin-top:20px;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                            <div style="font-size:2rem;">🧘</div>
-                            <h3 style="margin:0; color:var(--text-primary);">Stress Management</h3>
-                        </div>
-                        <div id="stressTips" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-                            <!-- Filled by JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Physical Wellness -->
-                    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:24px; margin-top:20px;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                            <div style="font-size:2rem;">🏃</div>
-                            <h3 style="margin:0; color:var(--text-primary);">Physical Activity</h3>
-                        </div>
-                        <div id="physicalTips" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-                            <!-- Filled by JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Social Connection -->
-                    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:24px; margin-top:20px;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                            <div style="font-size:2rem;">🤝</div>
-                            <h3 style="margin:0; color:var(--text-primary);">Social Connection</h3>
-                        </div>
-                        <div id="socialTips" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-                            <!-- Filled by JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Personal Growth -->
-                    <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:24px; margin-top:20px;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-                            <div style="font-size:2rem;">🌱</div>
-                            <h3 style="margin:0; color:var(--text-primary);">Personal Growth</h3>
-                        </div>
-                        <div id="growthTips" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-                            <!-- Filled by JavaScript -->
-                        </div>
-                    </div>
-
-                </div>
-
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="moon"></i></span>Sleep & Rest</div>
+                <div id="sleepTips" class="tips-category-grid"></div>
+            </section>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="shield"></i></span>Stress Management</div>
+                <div id="stressTips" class="tips-category-grid"></div>
+            </section>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="activity"></i></span>Physical Activity</div>
+                <div id="physicalTips" class="tips-category-grid"></div>
+            </section>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="users"></i></span>Social Connection</div>
+                <div id="socialTips" class="tips-category-grid"></div>
+            </section>
+            <section class="chart-container" style="padding:18px;">
+                <div class="section-title"><span class="icon-24"><i data-lucide="sprout"></i></span>Personal Growth</div>
+                <div id="growthTips" class="tips-category-grid"></div>
+            </section>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 
-    <script>
-        const allTips = {
-            tipsOfDay: [
-                "🎯 Start your day with intention: Identify your top 3 priorities to avoid feeling overwhelmed by everything.",
-                "☀️ Get sunlight in the morning: 10-20 minutes of natural light helps regulate your circadian rhythm.",
-                "🫂 Reach out to someone: A simple message or call to a friend can boost both your moods.",
-                "📝 Practice gratitude: Write down 3 things you're grateful for — it rewires your brain for positivity.",
-                "🎵 Play your favorite music: Music releases dopamine and instantly improves your mood."
-            ],
-            sleep: [
-                {
-                    title: "Follow a Sleep Schedule",
-                    desc: "Go to bed and wake up at the same time daily, even on weekends, to regulate your body's internal clock."
-                },
-                {
-                    title: "Dark Room",
-                    desc: "Keep your bedroom dark and cool (60-67°F). Darkness triggers melatonin production."
-                },
-                {
-                    title: "No Screens Before Bed",
-                    desc: "Avoid phones, laptops, and TVs for 30-60 minutes before sleep. Blue light disrupts melatonin."
-                },
-                {
-                    title: "Limit Caffeine",
-                    desc: "Avoid caffeine after 2 PM. It stays in your system for 5-6 hours and disrupts sleep."
-                }
-            ],
-            stress: [
-                {
-                    title: "4-7-8 Breathing",
-                    desc: "Inhale for 4 counts, hold for 7, exhale for 8. Activates your parasympathetic nervous system."
-                },
-                {
-                    title: "Progressive Muscle Relaxation",
-                    desc: "Tense and release each muscle group for 5 seconds. Reduces physical tension and anxiety."
-                },
-                {
-                    title: "Mindfulness Meditation",
-                    desc: "Just 10 minutes daily can reduce stress, anxiety, and improve focus. Apps like Headspace help."
-                },
-                {
-                    title: "Break Tasks into Steps",
-                    desc: "Big projects feel overwhelming. Break them into smaller, manageable tasks."
-                }
-            ],
-            physical: [
-                {
-                    title: "Daily Walk",
-                    desc: "20-30 minutes of walking releases endorphins and improves mood. Aim for nature if possible."
-                },
-                {
-                    title: "Stretching Routine",
-                    desc: "5 minutes of stretching improves blood flow, reduces tension, and boosts energy."
-                },
-                {
-                    title: "Yoga for Mind-Body",
-                    desc: "Yoga combines movement with mindfulness. Try YouTube tutorials for 10-15 minute sessions."
-                },
-                {
-                    title: "Stay Hydrated",
-                    desc: "Dehydration causes fatigue and mood issues. Drink 3-4 liters of water daily."
-                }
-            ],
-            social: [
-                {
-                    title: "Call a Friend",
-                    desc: "A voice call is more healing than texting. Even 10 minutes of genuine conversation helps."
-                },
-                {
-                    title: "Join Communities",
-                    desc: "Find clubs, groups, or online communities around your interests. Belonging matters."
-                },
-                {
-                    title: "Schedule Regular Hangouts",
-                    desc: "Consistency matters. Weekly hangouts with friends prevent isolation and boost resilience."
-                },
-                {
-                    title: "Ask for Help",
-                    desc: "It's not weakness. Vulnerability deepens relationships and shows strength, not weakness."
-                }
-            ],
-            growth: [
-                {
-                    title: "Daily Journaling",
-                    desc: "Writing processes emotions and clarifies thinking. Just 5-10 minutes daily helps significantly."
-                },
-                {
-                    title: "Learn Something New",
-                    desc: "Pick up a skill or hobby. Learning activates dopamine pathways and builds confidence."
-                },
-                {
-                    title: "Read 20 Minutes",
-                    desc: "Reading reduces stress by 68% and provides escapism and mental stimulation."
-                },
-                {
-                    title: "Set Boundaries",
-                    desc: "Saying 'no' to protect your energy isn't selfish—it's essential for mental health."
-                }
-            ]
-        };
+<script>
+const allTips = {
+    tipsOfDay: [
+        "Start your day with intention: pick your top three priorities.",
+        "Get natural daylight in the morning to support your sleep cycle.",
+        "Reach out to one person today for a short check-in.",
+        "Write three things you are grateful for before bed.",
+        "Play calm music during study breaks to reset your mood."
+    ],
+    sleep: [
+        { title: "Follow a Sleep Schedule", desc: "Try consistent sleep and wake times, including weekends." },
+        { title: "Optimize Bedroom Setup", desc: "Keep your room dark, quiet, and cool for better sleep quality." },
+        { title: "Reduce Night Screen Time", desc: "Pause phone and laptop use 30-60 minutes before sleeping." },
+        { title: "Limit Late Caffeine", desc: "Avoid caffeine in the second half of your day." }
+    ],
+    stress: [
+        { title: "Use 4-7-8 Breathing", desc: "Inhale 4 seconds, hold 7, exhale 8 to lower tension." },
+        { title: "Try Muscle Relaxation", desc: "Tense and release each muscle group for physical calm." },
+        { title: "Practice Mindfulness", desc: "10 minutes of focused breathing can improve concentration." },
+        { title: "Break Work into Steps", desc: "Use small sub-tasks to reduce overwhelm." }
+    ],
+    physical: [
+        { title: "Walk Daily", desc: "A short walk helps with mood regulation and focus." },
+        { title: "Stretch Between Sessions", desc: "Two to five minutes of stretching can reduce stiffness." },
+        { title: "Try Intro Yoga", desc: "Beginner routines combine movement and breathing." },
+        { title: "Hydrate Well", desc: "Regular hydration supports energy and mental clarity." }
+    ],
+    social: [
+        { title: "Call a Friend", desc: "Voice conversations can feel more supportive than text." },
+        { title: "Join a Community", desc: "Participate in clubs or groups that match your interests." },
+        { title: "Schedule Check-ins", desc: "Recurring social plans improve consistency and connection." },
+        { title: "Ask for Help", desc: "Seeking support early is a strength, not a weakness." }
+    ],
+    growth: [
+        { title: "Journal Daily", desc: "A few written lines can clear mental noise quickly." },
+        { title: "Learn One New Skill", desc: "Small progress builds confidence and momentum." },
+        { title: "Read 20 Minutes", desc: "Reading can lower stress and improve mental recovery." },
+        { title: "Set Boundaries", desc: "Protect focused time and rest with clear limits." }
+    ]
+};
 
-        // Tip of the day (rotate based on date)
-        const tipIndex = new Date().getDate() % allTips.tipsOfDay.length;
-        document.getElementById('tipsOfDay').textContent = allTips.tipsOfDay[tipIndex];
+const tipIndex = new Date().getDate() % allTips.tipsOfDay.length;
+document.getElementById('tipsOfDay').textContent = allTips.tipsOfDay[tipIndex];
 
-        // Render tips by category
-        function renderTips(containerId, tipsArray) {
-            const container = document.getElementById(containerId);
-            tipsArray.forEach(tip => {
-                container.innerHTML += `
-                    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:20px; transition:all 0.3s ease; cursor:pointer;"
-                         onmouseover="this.style.borderColor='rgba(108,99,255,0.3)'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.2)'"
-                         onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <div style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:8px;">${tip.title}</div>
-                        <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">${tip.desc}</div>
-                    </div>
-                `;
-            });
-        }
+function renderTips(containerId, tipsArray) {
+    const container = document.getElementById(containerId);
+    tipsArray.forEach(tip => {
+        container.innerHTML += `
+            <article class="tips-item">
+                <div class="tips-item-title">${tip.title}</div>
+                <div class="tips-item-copy">${tip.desc}</div>
+            </article>
+        `;
+    });
+}
 
-        renderTips('sleepTips', allTips.sleep);
-        renderTips('stressTips', allTips.stress);
-        renderTips('physicalTips', allTips.physical);
-        renderTips('socialTips', allTips.social);
-        renderTips('growthTips', allTips.growth);
-    </script>
+renderTips('sleepTips', allTips.sleep);
+renderTips('stressTips', allTips.stress);
+renderTips('physicalTips', allTips.physical);
+renderTips('socialTips', allTips.social);
+renderTips('growthTips', allTips.growth);
 
+ document.getElementById('accountToggle').addEventListener('click', () => {
+    document.getElementById('accountMenu').classList.toggle('open');
+ });
+
+lucide.createIcons();
+</script>
+<script src="/static/theme.js"></script>
 </body>
-
 </html>

@@ -1,294 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your mental health assessment result">
     <title>Your Result — MindSense</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="shortcut icon" href="/static/favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Enhanced Result Page Styling */
-        .result-page {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            width: 100%;
-            animation: fadeUp 0.6s ease;
+        .result-shell{
+            display:grid;
+            gap:18px;
+            max-width:980px;
+            margin:0 auto;
         }
 
-        .result-card {
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(253, 121, 168, 0.05) 100%);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: 28px;
-            padding: 48px;
-            width: 100%;
-            max-width: 600px;
-            margin: 40px auto;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-            animation: scalePop 0.6s ease 0.1s both;
+        .result-panel{
+            padding:20px;
+            border:1px solid var(--glass-border);
+            border-radius:10px;
+            background:linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
         }
 
-        .result-card:hover {
-            border-color: rgba(108, 99, 255, 0.4);
-            box-shadow: 0 12px 48px rgba(108, 99, 255, 0.15);
+        .result-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+        .result-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .result-chart-box{height:220px}
+
+        .mini-chart-title{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-bottom:10px;
+            padding:6px 10px;
+            border:1px solid var(--glass-border);
+            border-radius:8px;
+            background:rgba(255,255,255,0.03);
+            font-size:0.95rem;
+            font-weight:800;
+            color:var(--text-primary);
+            letter-spacing:0.2px;
         }
 
-        .result-icon {
-            font-size: 5rem;
-            text-align: center;
-            display: block;
-            margin-bottom: 20px;
-            animation: scalePop 0.6s ease 0.2s both;
-            animation: float 6s ease-in-out infinite;
+        .mini-chart-dot{
+            width:8px;
+            height:8px;
+            border-radius:50%;
+            background:var(--primary);
+            display:inline-block;
         }
 
-        .result-status-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 100px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
-            width: 100%;
-            margin: 16px 0;
-            animation: slideDown 0.6s ease 0.3s both;
+        .result-stats-grid .stat-card{
+            padding:16px;
+            min-height:110px;
         }
 
-        .badge-success {
-            background: linear-gradient(135deg, rgba(0, 184, 148, 0.2), rgba(0, 255, 200, 0.1));
-            border: 1px solid rgba(0, 184, 148, 0.4);
-            color: #00b894;
+        .recommendation-item{
+            border:1px solid var(--glass-border);
+            border-radius:9px;
+            padding:12px 13px;
+            background:rgba(255,255,255,.03);
+            color:var(--text-secondary);
+            line-height:1.45;
         }
 
-        .badge-warning {
-            background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(255, 200, 0, 0.1));
-            border: 1px solid rgba(253, 203, 110, 0.4);
-            color: #fdcb6e;
+        .actions-row{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:4px;
         }
 
-        .badge-danger {
-            background: linear-gradient(135deg, rgba(225, 112, 85, 0.2), rgba(255, 100, 80, 0.1));
-            border: 1px solid rgba(225, 112, 85, 0.4);
-            color: #e17055;
+        .result-subpanel{margin-bottom:18px; padding:16px;}
+
+        .result-title{
+            margin:0 0 8px 0;
         }
 
-        .result-title {
-            font-size: 2.2rem;
-            font-weight: 800;
-            text-align: center;
-            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 20px 0;
-            animation: fadeUp 0.6s ease 0.4s both;
+        .result-title-low{ color: #22c47f !important; }
+        .result-title-moderate{ color: #ffbc42 !important; }
+        .result-title-high{ color: #ff6b6b !important; }
+
+        .academic-card{
+            margin-bottom:16px;
+            padding:14px 16px;
+            border:1px solid var(--glass-border);
+            border-radius:10px;
+            background:rgba(255,255,255,0.03);
         }
 
-        .score-gauge {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            margin: 32px 0;
-            animation: fadeUp 0.6s ease 0.5s both;
+        .academic-title{
+            font-weight:800;
+            margin-bottom:6px;
+            color:var(--text-primary);
         }
 
-        .gauge-circle {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin: 0 auto 16px auto;
-            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(253, 121, 168, 0.1));
-            border: 2px solid rgba(108, 99, 255, 0.3);
-            animation: glowPulse 3s ease-in-out infinite;
+        .academic-text{
+            margin:0;
+            color:var(--text-secondary);
+            line-height:1.5;
         }
 
-        .gauge-success {
-            border-color: rgba(0, 184, 148, 0.5);
-            color: #00b894;
+        .academic-cgpa{
+            color:var(--text-primary);
+            font-weight:800;
         }
 
-        .gauge-warning {
-            border-color: rgba(253, 203, 110, 0.5);
-            color: #fdcb6e;
+        @media (max-width: 1279px){
+            .result-stats-grid{grid-template-columns:1fr 1fr}
         }
 
-        .gauge-danger {
-            border-color: rgba(225, 112, 85, 0.5);
-            color: #e17055;
+        @media (max-width: 767px){
+            .result-stats-grid{grid-template-columns:1fr 1fr}
+            .result-chart-grid{grid-template-columns:1fr}
+            .result-chart-box{height:190px}
+            .result-panel,.result-subpanel{padding:12px !important}
+            .actions-row{flex-direction:column}
+            .actions-row .btn { width: 100%; }
         }
 
-        .result-description {
-            text-align: center;
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--text-secondary);
-            margin: 24px 0;
-            animation: fadeUp 0.6s ease 0.6s both;
-        }
-
-        .tips-section {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 24px;
-            margin: 32px 0;
-            animation: fadeUp 0.6s ease 0.7s both;
-        }
-
-        .tips-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary-light);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .tip-item {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            padding: 12px 0;
-            transition: all 0.3s ease;
-            animation: fadeSlideUp 0.6s ease;
-        }
-
-        .tip-item:hover {
-            padding-left: 8px;
-        }
-
-        .tip-icon {
-            font-size: 1.4rem;
-            flex-shrink: 0;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 32px;
-            animation: fadeUp 0.6s ease 0.8s both;
-        }
-
-        .btn-group a {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .btn-group a:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.3);
-        }
-
-        .disclaimer {
-            margin-top: 24px;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            text-align: center;
-            line-height: 1.6;
-            animation: fadeUp 0.6s ease 1s both;
+        @media (max-width: 479px){
+            .result-stats-grid{grid-template-columns:1fr 1fr; gap:10px;}
         }
     </style>
 </head>
-
 <body>
-
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
-    <!-- Navbar -->
-    <nav class="navbar">
-        <a href="/student-dashboard" class="navbar-brand">
-            <div class="navbar-logo">🧠</div>
-            <span class="navbar-title">MindSense</span>
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+            <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
         </a>
-        <div class="navbar-links">
-            <a href="/student-dashboard">← Dashboard</a>
-        </div>
-    </nav>
-
-    <div class="result-page">
-        <div class="result-card">
-
-            <!-- Status Icon -->
-            <span class="result-icon">{{ icon }}</span>
-
-            <!-- Badge -->
-            <div class="result-status-badge badge-{{ badge_class }}">{{ status_label }}</div>
-
-            <!-- Title -->
-            <h1 class="result-title">{{ result }}</h1>
-
-            <!-- Score gauge -->
-            <div class="score-gauge">
-                <div class="gauge-circle gauge-{{ badge_class }}">
-                    {{ score }}<span style="font-size:0.9rem;">/40</span>
-                </div>
-                <div style="font-size:0.8rem; color:var(--text-muted);">Total Wellness Score</div>
-            </div>
-
-            <!-- Description -->
-            <p class="result-description">{{ description }}</p>
-
-            <!-- Tips -->
-            <div class="tips-section">
-                <div class="tips-title">💡 Personalized Recommendations</div>
-                {% for tip in tips %}
-                <div class="tip-item">
-                    <div class="tip-icon {{ tip.color }}">{{ tip.emoji }}</div>
-                    <span>{{ tip.text }}</span>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Breakdown -->
-            <div style="margin-bottom:32px;">
-                <div class="tips-title" style="text-align:left; margin-bottom:16px;">📊 Score Breakdown</div>
-                {% for item in breakdown %}
-                <div style="margin-bottom:14px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:600;">{{ item.label
-                            }}</span>
-                        <span style="font-size:0.85rem; color:var(--text-muted);">{{ item.value }}/5</span>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-title">Main</div>
+            <a href="/student-dashboard" class="sidebar-link"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+            <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+            <a href="/history" class="sidebar-link"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+            <a href="/analytics" class="sidebar-link"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+            <div class="sidebar-section-title">Wellness</div>
+            <a href="/resources" class="sidebar-link"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+            <a href="/daily-tips" class="sidebar-link"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="account-card" id="accountToggle" type="button">
+                <div class="left">
+                    <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+                    <div>
+                        <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
+                        <div class="sidebar-user-role">Student</div>
                     </div>
-                    <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:100px; overflow:hidden;">
-                        <div
-                            style="height:100%; width:{{ item.pct }}%; background:linear-gradient(90deg, {{ item.color }}); border-radius:100px; transition:width 1s ease;">
+                </div>
+                <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+            </button>
+            <div class="account-popover" id="accountMenu">
+                <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-header-title">
+                <h1>Assessment Result</h1>
+                <p>Your latest mental well-being summary and recommendations</p>
+            </div>
+        </div>
+
+        <div class="main-body">
+            <div class="result-shell">
+            <section class="result-panel">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <span class="status-icon-only {% if status_label == 'Excellent' %}status-success{% elif status_label == 'Moderate' %}status-warning{% else %}status-danger{% endif %}">
+                        {% if status_label == 'Excellent' %}
+                        <i data-lucide="shield-check"></i>
+                        {% elif status_label == 'Moderate' %}
+                        <i data-lucide="circle-alert"></i>
+                        {% elif status_label == 'High' %}
+                        <i data-lucide="triangle-alert"></i>
+                        {% else %}
+                        <i data-lucide="siren"></i>
+                        {% endif %}
+                    </span>
+                    <span class="risk-badge {% if status_label == 'Excellent' %}risk-low{% elif status_label == 'Moderate' %}risk-moderate{% elif status_label == 'High' %}risk-high{% else %}risk-severe{% endif %}">{{ status_label }}</span>
+                </div>
+
+                <h2 class="result-title {% if status_label == 'Excellent' %}result-title-low{% elif status_label == 'Moderate' %}result-title-moderate{% else %}result-title-high{% endif %}">{{ result }}</h2>
+                <div style="margin-bottom:14px;color:var(--text-muted);">Score: <strong>{{ score }}/40</strong></div>
+                <p style="margin-bottom:18px;color:var(--text-secondary);line-height:1.5;">{{ description }}</p>
+
+                <div class="result-stats-grid">
+                    <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ score }}</div><div class="stat-card-label">Raw Score</div></div>
+                    <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ ((score / 40) * 100)|round(1) }}%</div><div class="stat-card-label">Risk Index</div></div>
+                    <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ status_label }}</div><div class="stat-card-label">Category</div></div>
+                    <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{% if ml_probability is defined and ml_probability is not none %}{{ (ml_probability * 100)|round(1) }}%{% else %}N/A{% endif %}</div><div class="stat-card-label">Model Probability</div></div>
+                </div>
+
+                <div class="chart-container result-subpanel">
+                    <div class="section-title"><span class="icon-24"><i data-lucide="chart-line"></i></span>Statistical Visualizations</div>
+                    <div class="result-chart-grid">
+                        <div class="metric-card">
+                            <div class="mini-chart-title"><span class="mini-chart-dot"></span>Dimension Radar</div>
+                            <div class="result-chart-box"><canvas id="resultRadarChart"></canvas></div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="mini-chart-title"><span class="mini-chart-dot"></span>Dimension Bars</div>
+                            <div class="result-chart-box"><canvas id="resultBarChart"></canvas></div>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
 
-            <!-- Actions -->
-            <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
-                <a href="/test" class="btn btn-primary">🔁 Retake Test</a>
-                <a href="/student-dashboard" class="btn btn-outline">🏠 Dashboard</a>
-            </div>
+                <div class="chart-container result-subpanel">
+                    <div class="section-title"><span class="icon-24"><i data-lucide="bar-chart-3"></i></span>Score Breakdown</div>
+                    {% for item in breakdown %}
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                            <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:600;">{{ item.label }}</span>
+                            <span style="font-size:0.85rem;color:var(--text-muted);">{{ item.value }}/5</span>
+                        </div>
+                        <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;">
+                            <div class="breakdown-fill" data-pct="{{ item.pct }}" style="height:100%;background:var(--primary);border-radius:100px;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
 
-            <div
-                style="margin-top:24px; font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.6;">
-                ⚠️ This assessment is for informational purposes only and is <strong>not</strong> a medical
-                diagnosis.<br>
-                If you're struggling, please reach out to a mental health professional.
-            </div>
+                {% if profile and profile.cgpa %}
+                <div class="academic-card">
+                    <div class="academic-title">Academic Status</div>
+                    {% set cgpa = profile.cgpa|float %}
+                    {% if cgpa < 7.0 %}
+                    <p class="academic-text">Your CGPA is <span class="academic-cgpa">{{ cgpa }}</span>. Consider a lighter routine with support from mentors and advisors.</p>
+                    {% else %}
+                    <p class="academic-text">Your CGPA is <span class="academic-cgpa">{{ cgpa }}</span>. Keep your current academic rhythm steady.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
 
+                <div class="actions-row">
+                    <a href="/test" class="btn btn-primary">Retake Test</a>
+                    <a href="/history" class="btn btn-outline">View History</a>
+                    <a href="/student-dashboard" class="btn btn-outline">Back to Dashboard</a>
+                </div>
+
+                <p style="margin-top:14px;font-size:0.78rem;color:var(--text-muted);">This assessment is informational and not a medical diagnosis. Seek professional care if you need immediate support.</p>
+            </section>
+            </div>
         </div>
-    </div>
+    </main>
+</div>
 
+<script id="result-data" type="application/json">
+{
+    "score": {{ score|int }},
+    "breakdown": [
+        {% for item in breakdown %}
+        {"label": "{{ item.label }}", "value": {{ item.value }}}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+
+<script>
+    const resultData = JSON.parse(document.getElementById('result-data').textContent);
+    const breakdownData = resultData.breakdown || [];
+    const labels = breakdownData.map(item => item.label);
+    const values = breakdownData.map(item => item.value);
+    const scoreValue = Number(resultData.score || 0);
+    const root = getComputedStyle(document.documentElement);
+    const textColor = root.getPropertyValue('--text-secondary').trim() || '#d3d3d3';
+    const mutedColor = root.getPropertyValue('--text-muted').trim() || '#a8a8a8';
+    const gridColor = root.getPropertyValue('--glass-border').trim() || 'rgba(148,163,184,0.25)';
+    const chartPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+    document.getElementById('accountToggle').addEventListener('click', () => {
+        document.getElementById('accountMenu').classList.toggle('open');
+    });
+
+    new Chart(document.getElementById('resultRadarChart').getContext('2d'), {
+        type: 'radar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Score by Dimension',
+                data: values,
+                borderColor: chartPalette[0],
+                backgroundColor: 'rgba(59,130,246,0.25)',
+                pointBackgroundColor: chartPalette[0],
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: { stepSize: 1, color: mutedColor, backdropColor: 'transparent' },
+                    pointLabels: { color: textColor },
+                    angleLines: { color: gridColor },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    new Chart(document.getElementById('resultBarChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: values, backgroundColor: values.map((_, idx) => chartPalette[idx % chartPalette.length]), borderRadius: 6 }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } },
+                x: { ticks: { color: textColor, maxRotation: 0, autoSkip: true }, grid: { display: false } }
+            }
+        }
+    });
+
+    document.querySelectorAll('.breakdown-fill').forEach((el, idx) => {
+        const pct = Number(el.getAttribute('data-pct') || 0);
+        el.style.width = `${pct}%`;
+        el.style.background = chartPalette[idx % chartPalette.length];
+    });
+    lucide.createIcons();
+</script>
+<script src="/static/theme.js"></script>
 </body>
-
 </html>

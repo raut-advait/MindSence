@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics — MindSense</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="shortcut icon" href="/static/favicon.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="/" class="sidebar-brand">
+        <div class="sidebar-brand-icon icon-20"><i data-lucide="brain"></i></div>
+        <div class="sidebar-brand-text">MindSense<span>Student Portal</span></div>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section-title">Main</div>
+        <a href="/student-dashboard" class="sidebar-link"><span class="link-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</a>
+        <a href="/test" class="sidebar-link"><span class="link-icon"><i data-lucide="clipboard-check"></i></span>Take a Test</a>
+        <a href="/history" class="sidebar-link"><span class="link-icon"><i data-lucide="history"></i></span>History</a>
+        <a href="/analytics" class="sidebar-link active"><span class="link-icon"><i data-lucide="chart-no-axes-combined"></i></span>Analytics</a>
+        <div class="sidebar-section-title">Wellness</div>
+        <a href="/resources" class="sidebar-link"><span class="link-icon"><i data-lucide="book-open"></i></span>Resources</a>
+        <a href="/daily-tips" class="sidebar-link"><span class="link-icon"><i data-lucide="lightbulb"></i></span>Daily Tips</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="account-card" id="accountToggle" type="button">
+          <div class="left">
+            <div class="sidebar-avatar">{{ session['user'][0].upper() }}</div>
+            <div>
+              <div class="sidebar-user-name">{{ session['name'] if session.get('name') else session['user'] }}</div>
+              <div class="sidebar-user-role">Student</div>
+            </div>
+          </div>
+          <span class="icon-16"><i data-lucide="ellipsis"></i></span>
+        </button>
+        <div class="account-popover" id="accountMenu">
+          <a href="/logout"><span class="icon-16"><i data-lucide="log-out"></i></span> Logout</a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="main-header">
+        <div class="main-header-title">
+          <h1>Analytics</h1>
+          <p>Aggregate and individual student mental health trends</p>
+        </div>
+      </div>
+
+      <div class="main-body">
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card"><div style="font-size:1.7rem;font-weight:800;" id="kpiCount">0</div><div class="stat-card-label">Assessments</div><div class="kpi-sparkline"><span style="height:20%"></span><span style="height:40%"></span><span style="height:35%"></span><span style="height:60%"></span><span style="height:80%"></span></div></div>
+          <div class="stat-card"><div style="font-size:1.7rem;font-weight:800;" id="kpiAvg">0</div><div class="stat-card-label">Avg Score</div><div class="kpi-sparkline"><span style="height:55%"></span><span style="height:45%"></span><span style="height:50%"></span><span style="height:65%"></span><span style="height:70%"></span></div></div>
+          <div class="stat-card"><div style="font-size:1.7rem;font-weight:800;" id="kpiHigh">0</div><div class="stat-card-label">High Risk Count</div><div class="kpi-sparkline"><span style="height:15%"></span><span style="height:25%"></span><span style="height:30%"></span><span style="height:25%"></span><span style="height:20%"></span></div></div>
+          <div class="stat-card"><div style="font-size:1.7rem;font-weight:800;" id="kpiLatest">—</div><div class="stat-card-label">Latest Result</div><div class="kpi-sparkline"><span style="height:30%"></span><span style="height:30%"></span><span style="height:35%"></span><span style="height:35%"></span><span style="height:40%"></span></div></div>
+        </div>
+
+        <div class="chart-container ai-summary-panel" style="margin-bottom:16px;">
+          <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="sparkles"></i></span><span>AI Analytics Summary</span></div>
+          <div class="ai-summary-toolbar">
+            <p style="margin:0;color:var(--text-secondary);font-size:.92rem;">Personalized insights generated from your recent tests and mood patterns.</p>
+            <div class="ai-summary-actions">
+              <button class="btn btn-outline btn-sm" id="refreshSummaryBtn" type="button">Refresh Summary</button>
+            </div>
+          </div>
+          <div id="aiSummaryText" class="ai-render">Loading summary...</div>
+        </div>
+
+        <div class="analytics-chart-grid">
+          <div class="chart-container">
+            <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="chart-line"></i></span><span>Score Trend</span></div>
+            <div style="height:300px;"><canvas id="trend"></canvas></div>
+          </div>
+          <div class="chart-container">
+            <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="chart-pie"></i></span><span>Risk Distribution</span></div>
+            <div style="height:300px;"><canvas id="dist"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-container" style="margin-top:16px;">
+          <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="table"></i></span><span>Data Table</span></div>
+          <div class="responsive-table-wrap">
+            <table class="responsive-table">
+              <thead>
+                <tr style="border-bottom:1px solid var(--glass-border)">
+                  <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="date">Date</th>
+                  <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="score">Score</th>
+                  <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="result">Result</th>
+                </tr>
+              </thead>
+              <tbody id="analyticsRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .main-header-title h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 2.6vw, 2.05rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .main-header-title p {
+      margin: 6px 0 0;
+      font-size: clamp(.92rem, 1.45vw, 1.02rem);
+      line-height: 1.45;
+      color: var(--text-secondary);
+      letter-spacing: 0.01em;
+    }
+
+    .analytics-status-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .analytics-status-icon.excellent {
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.45);
+      background: rgba(34, 197, 94, 0.16);
+    }
+
+    .analytics-status-icon.moderate {
+      color: #facc15;
+      border-color: rgba(250, 204, 21, 0.45);
+      background: rgba(250, 204, 21, 0.16);
+    }
+
+    .analytics-status-icon.high,
+    .analytics-status-icon.severe {
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.16);
+    }
+
+    .analytics-section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 2px 0 14px;
+      padding: 9px 12px;
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      color: var(--text-primary);
+      font-size: clamp(1rem, 1.5vw, 1.12rem);
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .analytics-title-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--glass-border);
+      color: #66c2ff;
+      flex-shrink: 0;
+    }
+
+    .analytics-chart-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+    }
+
+    .ai-summary-panel {
+      padding: 18px;
+    }
+
+    .ai-summary-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .ai-summary-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #refreshSummaryBtn {
+      min-width: 158px;
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    @media (max-width: 1023px) {
+      .analytics-chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .main-header-title h1 {
+        font-size: 1.52rem;
+      }
+
+      .main-header-title p {
+        margin-top: 4px;
+        font-size: .92rem;
+      }
+
+      .ai-summary-panel {
+        padding: 14px !important;
+      }
+
+      #aiSummaryText {
+        font-size: .92rem;
+      }
+
+      .analytics-section-title {
+        padding: 8px 10px;
+        font-size: 1.02rem;
+        margin-bottom: 12px;
+      }
+
+      .ai-summary-toolbar {
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .ai-summary-actions {
+        width: 100%;
+      }
+
+      #refreshSummaryBtn {
+        min-width: 0;
+      }
+    }
+
+    .ai-render {
+      margin: 0;
+      line-height: 1.58;
+      color: var(--text-primary);
+    }
+
+    .ai-paragraph {
+      margin: 0 0 10px;
+      color: var(--text-primary);
+    }
+
+    .ai-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .ai-list li {
+      color: var(--text-primary);
+      line-height: 1.56;
+    }
+
+    .ai-render strong {
+      color: #dcecff;
+      font-weight: 700;
+    }
+
+    .ai-empty {
+      color: var(--text-muted);
+    }
+  </style>
+
+  <script>
+    let sourceTests = [];
+    let currentSort = { key: 'date', dir: 'desc' };
+
+    function iconForResult(result) {
+      if (result.includes('Excellent')) return '<span class="analytics-status-icon excellent" title="Excellent"><i data-lucide="shield-check"></i></span>';
+      if (result.includes('Moderate')) return '<span class="analytics-status-icon moderate" title="Moderate"><i data-lucide="circle-alert"></i></span>';
+      if (result.includes('High')) return '<span class="analytics-status-icon high" title="High"><i data-lucide="triangle-alert"></i></span>';
+      return '<span class="analytics-status-icon severe" title="Severe"><i data-lucide="siren"></i></span>';
+    }
+
+    function applyFilters() {
+      return [...sourceTests];
+    }
+
+    function latestResultColor(result) {
+      if (!result) return 'var(--text-primary)';
+      if (result.includes('Excellent')) return '#22c55e';
+      if (result.includes('Moderate')) return '#facc15';
+      return '#ef4444';
+    }
+
+    function renderTable(tests) {
+      const rows = document.getElementById('analyticsRows');
+      const sorted = [...tests].sort((a, b) => {
+        const d = currentSort.dir === 'asc' ? 1 : -1;
+        if (currentSort.key === 'score') return (a.total_score - b.total_score) * d;
+        return String(a[currentSort.key] || '').localeCompare(String(b[currentSort.key] || '')) * d;
+      });
+      rows.innerHTML = sorted.map(t => `
+        <tr style="border-bottom:1px solid var(--glass-border)">
+          <td data-label="Date" style="padding:10px;">${(t.date || '').split(' ')[0]}</td>
+          <td data-label="Score" style="padding:10px;">${t.total_score}</td>
+          <td data-label="Result" style="padding:10px;display:flex;align-items:center;gap:8px;">${iconForResult(t.result)}<span>${t.result}</span></td>
+        </tr>`).join('');
+      lucide.createIcons();
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function decodeEscapedUnicode(text) {
+      return String(text || '').replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16))
+      );
+    }
+
+    function renderInlineMarkdown(text) {
+      return escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+    }
+
+    function formatAiText(rawText) {
+      const normalized = decodeEscapedUnicode(rawText).replace(/\r\n/g, '\n').trim();
+      if (!normalized) return '<p class="ai-empty">No summary available yet.</p>';
+
+      const lines = normalized.split('\n').map(line => line.trim()).filter(Boolean);
+      const bulletRegex = /^(?:[-*•]\s+|\d+\.\s+)/;
+
+      let html = '';
+      let listOpen = false;
+
+      for (const line of lines) {
+        const isBullet = bulletRegex.test(line);
+        const cleaned = line.replace(bulletRegex, '');
+        const rendered = renderInlineMarkdown(cleaned);
+
+        if (isBullet) {
+          if (!listOpen) {
+            html += '<ul class="ai-list">';
+            listOpen = true;
+          }
+          html += `<li>${rendered}</li>`;
+        } else {
+          if (listOpen) {
+            html += '</ul>';
+            listOpen = false;
+          }
+          html += `<p class="ai-paragraph">${rendered}</p>`;
+        }
+      }
+
+      if (listOpen) html += '</ul>';
+      return html;
+    }
+
+    async function loadAiSummary() {
+      const target = document.getElementById('aiSummaryText');
+      if (!target) return;
+      target.innerHTML = '<p class="ai-empty">Generating summary...</p>';
+      try {
+        const res = await fetch('/api/analytics-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          target.innerHTML = `<p class="ai-empty">${escapeHtml(data.error || 'Unable to generate summary right now.')}</p>`;
+          return;
+        }
+        target.innerHTML = formatAiText(data.summary || 'No summary available yet.');
+      } catch (_) {
+        target.innerHTML = '<p class="ai-empty">Unable to connect to AI service.</p>';
+      }
+    }
+
+    async function loadData() {
+      const res = await fetch('/api/test-history');
+      const data = await res.json();
+      sourceTests = data.tests || [];
+      const tests = applyFilters();
+
+      document.getElementById('kpiCount').textContent = tests.length;
+      document.getElementById('kpiAvg').textContent = tests.length ? Math.round(tests.reduce((a,b)=>a+b.total_score,0)/tests.length) : 0;
+      document.getElementById('kpiHigh').textContent = tests.filter(t => t.result.includes('High') || t.result.includes('Severe')).length;
+      const latestEl = document.getElementById('kpiLatest');
+      const latestResult = tests.length ? tests[0].result : '';
+      latestEl.textContent = latestResult ? latestResult.split(' ')[0] : '—';
+      latestEl.style.color = latestResultColor(latestResult);
+
+      const labels = tests.map(t => (t.date || '').split(' ')[0]).reverse();
+      const scores = tests.map(t => t.total_score).reverse();
+      new Chart(document.getElementById('trend').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [{ data: scores, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.20)', fill: true, tension: 0.35 }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 1050,
+            easing: 'easeOutQuart'
+          },
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 8,
+                maxRotation: 35,
+                minRotation: 0,
+                color: 'rgba(255,255,255,0.65)'
+              },
+              grid: { display: false }
+            },
+            y: {
+              ticks: { color: 'rgba(255,255,255,0.65)' },
+              grid: { color: 'rgba(255,255,255,0.08)' }
+            }
+          }
+        }
+      });
+
+      const dist = tests.reduce((acc, t) => { acc[t.result]=(acc[t.result]||0)+1; return acc; }, {});
+      new Chart(document.getElementById('dist').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels:Object.keys(dist), datasets:[{ data:Object.values(dist), backgroundColor:['#10b981','#f59e0b','#ef4444','#dc2626'] }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 1100,
+            easing: 'easeOutBack'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              align: 'start',
+              labels: {
+                color: 'rgba(255,255,255,0.78)',
+                boxWidth: 38,
+                boxHeight: 14,
+                padding: 12,
+                usePointStyle: false
+              }
+            }
+          }
+        }
+      });
+
+      renderTable(tests);
+    }
+
+    document.querySelectorAll('[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.getAttribute('data-sort');
+        if (currentSort.key === key) currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+        else { currentSort.key = key; currentSort.dir = 'asc'; }
+        renderTable(applyFilters());
+      });
+    });
+
+    document.getElementById('accountToggle').addEventListener('click', () => {
+      document.getElementById('accountMenu').classList.toggle('open');
+    });
+
+    const refreshSummaryBtn = document.getElementById('refreshSummaryBtn');
+    if (refreshSummaryBtn) {
+      refreshSummaryBtn.addEventListener('click', loadAiSummary);
+    }
+
+    lucide.createIcons();
+    loadData();
+    loadAiSummary();
+  </script>
+  <script src="/static/theme.js"></script>
+</body>
+</html>

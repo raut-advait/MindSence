@@ -3,338 +3,201 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Student Mental Health Analyzer — Understand your well-being with smart AI-powered analysis and personalized insights.">
+  <meta name="description" content="MindSense landing page">
   <title>MindSense — Student Mental Health Analyzer</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="shortcut icon" href="/static/favicon.svg">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* Enhanced Home Page Styling */
-    .hero-section {
-      animation: fadeUp 0.8s ease;
+    .home-shell {
+      grid-template-columns: 1fr;
+      max-width: 960px;
+      gap: 26px;
+      padding-top: 18px;
     }
 
-    .hero-content {
-      animation: fadeSlideUp 0.8s ease 0.1s both;
+    .home-hero {
+      padding-top: 98px !important;
+      min-height: 90vh !important;
     }
 
-    .hero-badge {
-      animation: slideDown 0.6s ease;
+    .about-panel {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
     }
 
-    .hero-title {
-      background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: fadeUp 0.6s ease 0.2s both;
-    }
-
-    .hero-subtitle {
-      animation: fadeUp 0.6s ease 0.3s both;
-    }
-
-    .hero-actions {
-      animation: fadeUp 0.6s ease 0.4s both;
-    }
-
-    .hero-actions .btn {
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .hero-actions .btn:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(108, 99, 255, 0.3);
-    }
-
-    .hero-stats {
-      animation: fadeUp 0.6s ease 0.5s both;
-    }
-
-    .stat-item {
-      transition: all 0.3s ease;
-      animation: fadeSlideUp 0.6s ease;
-    }
-
-    .stat-item:nth-child(1) { animation-delay: 0.5s; }
-    .stat-item:nth-child(2) { animation-delay: 0.6s; }
-    .stat-item:nth-child(3) { animation-delay: 0.7s; }
-
-    .stat-item:hover {
-      transform: translateY(-6px);
-    }
-
-    .hero-visual {
-      animation: float 6s ease-in-out infinite;
-    }
-
-    .hero-card-float {
-      background: linear-gradient(135deg, rgba(108, 99, 255, 0.15) 0%, rgba(253, 121, 168, 0.1) 100%);
-      border: 1px solid rgba(108, 99, 255, 0.2);
-      border-radius: 24px;
-      padding: 28px;
-      transition: all 0.3s ease;
-    }
-
-    .hero-card-float:hover {
-      border-color: rgba(108, 99, 255, 0.4);
-      box-shadow: 0 12px 48px rgba(108, 99, 255, 0.15);
-    }
-
-    .icon-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .icon-box {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 1.8rem;
-      text-align: center;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      animation: fadeSlideUp 0.6s ease;
-    }
-
-    .icon-box:hover {
-      transform: translateY(-6px);
-      border-color: rgba(108, 99, 255, 0.3);
-      background: rgba(108, 99, 255, 0.08);
-      box-shadow: 0 8px 20px rgba(108, 99, 255, 0.15);
-    }
-
-    .icon-box.green { animation-delay: 0.3s; }
-    .icon-box.pink { animation-delay: 0.35s; }
-    .icon-box.teal { animation-delay: 0.4s; }
-
-    .pulse-bar {
+    .about-header {
       display: flex;
-      gap: 4px;
+      align-items: center;
       justify-content: center;
-      align-items: flex-end;
-      height: 40px;
-    }
-
-    .pulse-bar span {
-      width: 4px;
-      background: linear-gradient(180deg, var(--primary), var(--secondary));
-      border-radius: 2px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .pulse-bar span:nth-child(1) { animation-delay: 0s; height: 10px; }
-    .pulse-bar span:nth-child(2) { animation-delay: 0.1s; height: 15px; }
-    .pulse-bar span:nth-child(3) { animation-delay: 0.2s; height: 20px; }
-    .pulse-bar span:nth-child(4) { animation-delay: 0.3s; height: 25px; }
-    .pulse-bar span:nth-child(5) { animation-delay: 0.4s; height: 30px; }
-    .pulse-bar span:nth-child(6) { animation-delay: 0.5s; height: 28px; }
-    .pulse-bar span:nth-child(7) { animation-delay: 0.6s; height: 22px; }
-    .pulse-bar span:nth-child(8) { animation-delay: 0.7s; height: 18px; }
-    .pulse-bar span:nth-child(9) { animation-delay: 0.8s; height: 12px; }
-    .pulse-bar span:nth-child(10) { animation-delay: 0.9s; height: 8px; }
-
-    .features-section {
-      animation: fadeUp 0.8s ease 0.4s both;
-    }
-
-    .section-heading {
-      animation: fadeUp 0.6s ease;
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .section-heading h2 {
-      font-size: 2.2rem;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 1.15rem;
       font-weight: 800;
-      background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 12px;
+      color: var(--text-primary);
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 28px;
-    }
-
-    .feature-card {
-      background: linear-gradient(135deg, rgba(108, 99, 255, 0.08) 0%, rgba(0, 206, 201, 0.05) 100%);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 32px;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-      overflow: hidden;
-      animation: fadeSlideUp 0.6s ease;
-    }
-
-    .feature-card:nth-child(1) { animation-delay: 0.5s; }
-    .feature-card:nth-child(2) { animation-delay: 0.6s; }
-    .feature-card:nth-child(3) { animation-delay: 0.7s; }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-      transition: left 0.6s ease;
-    }
-
-    .feature-card:hover::before {
-      left: 100%;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-12px);
-      border-color: rgba(108, 99, 255, 0.3);
-      box-shadow: 0 12px 48px rgba(108, 99, 255, 0.2);
-    }
-
-    .feature-icon {
-      font-size: 3rem;
+    .about-subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
       margin-bottom: 16px;
-      transition: transform 0.3s ease;
     }
 
-    .feature-card:hover .feature-icon {
-      transform: scale(1.1) rotate(5deg);
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
     }
 
-    .feature-card h3 {
-      font-size: 1.3rem;
+    .about-card {
+      border: 1px solid var(--glass-border);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 146px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .about-card-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
       font-weight: 700;
       color: var(--text-primary);
-      margin-bottom: 12px;
     }
 
-    .feature-card p {
+    .about-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
       color: var(--text-secondary);
-      line-height: 1.6;
+    }
+
+    .about-copy {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1023px) {
+      .about-grid { grid-template-columns: 1fr; }
+      .about-card { min-height: auto; }
+    }
+
+    @media (max-width: 767px) {
+      .home-hero {
+        padding-top: 82px !important;
+        min-height: auto !important;
+      }
+
+      .home-shell {
+        gap: 16px;
+        padding-top: 6px;
+      }
+
+      .about-panel {
+        padding: 12px;
+        margin-top: 2px;
+      }
+
+      .hero-title {
+        font-size: 1.75rem !important;
+        line-height: 1.2;
+      }
+
+      .hero-subtitle {
+        font-size: .92rem !important;
+        margin-bottom: 14px !important;
+      }
+
+      .hero-actions {
+        width: 100%;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .hero-actions .btn {
+        width: auto !important;
+        min-width: 170px;
+        max-width: 240px;
+      }
+    }
+
+    @media (max-width: 479px) {
+      .hero-title {
+        font-size: 1.6rem !important;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+      }
+
+      .hero-actions .btn {
+        width: 100% !important;
+        max-width: 300px;
+      }
     }
   </style>
 </head>
-<body>
-
-  <!-- Background orbs -->
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-
-  <!-- Navbar -->
+<body class="home-page">
   <nav class="navbar">
     <a href="/" class="navbar-brand">
-      <div class="navbar-logo">🧠</div>
+      <div class="navbar-logo icon-20"><i data-lucide="brain"></i></div>
       <span class="navbar-title">MindSense</span>
     </a>
     <div class="navbar-links">
       <a href="/" class="active">Home</a>
       <a href="/login">Login</a>
-      <a href="/register" class="btn-nav">Get Started</a>
+      <a href="/register" class="btn-nav">Sign Up</a>
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-content">
-      <!-- Left: Text -->
-      <div class="hero-text">
-        <div class="hero-badge">
-          <span></span> AI-Powered Mental Health Analysis
-        </div>
-        <h1 class="hero-title">
-          Your Mind Deserves<br>
-          <span class="gradient-text">Better Care</span>
-        </h1>
-        <p class="hero-subtitle">
-          MindSense helps students understand their mental well-being through intelligent assessments, personalized insights, and actionable recommendations — completely free.
-        </p>
-        <div class="hero-actions">
-          <a href="/register" class="btn btn-primary">🚀 Start Your Assessment</a>
-          <a href="/login" class="btn btn-outline">Sign In</a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <div class="stat-number">98%</div>
-            <div class="stat-label">Accuracy</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">5 min</div>
-            <div class="stat-label">Quick Test</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">Free</div>
-            <div class="stat-label">Forever</div>
-          </div>
+  <section class="hero-section home-hero" style="padding-top:60px;min-height:88vh;">
+    <div class="hero-content home-shell">
+      <div class="hero-text" style="text-align:center;">
+        <div class="hero-badge" style="margin-inline:auto;"><span></span> Student Mental Health Platform</div>
+        <h1 class="hero-title" style="font-size:3rem;line-height:1.15;">Minimal, Data-Driven Mental Wellness Assessments</h1>
+        <p class="hero-subtitle" style="max-width:720px;margin:0 auto 20px auto;">MindSense helps students run quick and full lifestyle assessments, review trends, and access support resources in one dashboard.</p>
+        <div class="hero-actions" style="justify-content:center;">
+          <a href="/register" class="btn btn-primary">Create Account</a>
+          <a href="/login" class="btn btn-outline">Login</a>
         </div>
       </div>
 
-      <!-- Right: Visual card -->
-      <div class="hero-visual">
-        <div class="hero-card-float">
-          <div class="icon-grid">
-            <div class="icon-box">🧠</div>
-            <div class="icon-box green">💚</div>
-            <div class="icon-box pink">🌸</div>
-            <div class="icon-box teal">🌊</div>
-            <div class="icon-box">⚡</div>
-            <div class="icon-box green">🌿</div>
-          </div>
-          <div style="text-align:center; margin-bottom:16px;">
-            <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Your Wellness Pulse</div>
-          </div>
-          <div class="pulse-bar">
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span>
-          </div>
-          <div style="text-align:center; margin-top:20px;">
-            <span style="font-size:0.85rem; color:var(--primary-light); font-weight:600;">✨ Looking Good Today!</span>
-          </div>
+      <div class="chart-container about-panel">
+        <div class="about-header"><span class="about-icon"><i data-lucide="cpu"></i></span>About This Build</div>
+        <p class="about-subtitle">What this project is built for, in one glance.</p>
+        <div class="about-grid">
+          <article class="about-card">
+            <div class="about-card-top"><span class="about-icon"><i data-lucide="brain-circuit"></i></span>ML Training Focus</div>
+            <p class="about-copy">Built as an ML training application with logistic regression as the core baseline model for experimentation and learning.</p>
+          </article>
+          <article class="about-card">
+            <div class="about-card-top"><span class="about-icon"><i data-lucide="clipboard-list"></i></span>Assessment Modes</div>
+            <p class="about-copy">Supports a quick daily mode and a full mode for deeper scoring and trend interpretation.</p>
+          </article>
+          <article class="about-card">
+            <div class="about-card-top"><span class="about-icon"><i data-lucide="workflow"></i></span>Student Workflow</div>
+            <p class="about-copy">Take assessments, review history, inspect analytics, and use guided mental wellness resources.</p>
+          </article>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="features-section">
-    <div class="section-heading">
-      <h2>Why Choose MindSense?</h2>
-      <p>Science-backed tools designed specifically for students</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon purple">🔍</div>
-        <h3>Smart Assessment</h3>
-        <p>Multi-dimensional questionnaire covering stress, anxiety, sleep, and social well-being for a complete picture.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon green">📊</div>
-        <h3>Instant Insights</h3>
-        <p>Get immediate, personalized results with detailed explanations and evidence-based recommendations.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon pink">🔒</div>
-        <h3>100% Private</h3>
-        <p>Your mental health data stays private and secure. What you share here stays here, always.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA Section -->
-  <section style="text-align:center; padding: 60px 40px 100px;">
-    <div style="max-width:520px; margin:0 auto;">
-      <div style="font-size:3rem; margin-bottom:20px;">🌟</div>
-      <h2 style="font-size:2rem; font-weight:800; color:var(--text-primary); margin-bottom:12px;">Ready to get started?</h2>
-      <p style="color:var(--text-secondary); margin-bottom:32px;">Join thousands of students taking control of their mental health journey.</p>
-      <a href="/register" class="btn btn-primary" style="font-size:1rem; padding:16px 40px;">Create Free Account →</a>
-    </div>
-  </section>
-
+  <script>
+    lucide.createIcons();
+  </script>
+  <script src="/static/theme.js"></script>
 </body>
 </html>
