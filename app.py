@@ -807,6 +807,38 @@ def predict():
         rec.setdefault('Physical_Activity', activity)
         rec.setdefault('Stress_Level', stress_val)
 
+        # Recreate engineered features expected by the trained lifestyle model.
+        # Training script uses these derived columns; missing them at inference
+        # pushes predictions toward a single class.
+        def _norm(value, min_v, max_v):
+            try:
+                v = float(value)
+            except Exception:
+                v = float(min_v)
+            if max_v <= min_v:
+                return 0.0
+            v = max(min_v, min(max_v, v))
+            return (v - min_v) / (max_v - min_v)
+
+        sleep_val = float(rec.get('Sleep_Duration', sleep))
+        study_val = float(rec.get('Study_Hours', study))
+        social_media_val = float(rec.get('Social_Media', 2.0))
+        activity_val = float(rec.get('Physical_Activity', activity))
+        stress_model_val = float(rec.get('Stress_Level', stress_val))
+        cgpa_val = float(rec.get('CGPA', 3.0))
+
+        rec['sleep_study_ratio'] = sleep_val / (study_val + 1.0)
+        social_norm = _norm(social_media_val, 0.0, 6.0)
+        physical_norm = _norm(activity_val, 0.0, 3.5)
+        rec['social_activity_score'] = 0.6 * physical_norm + 0.4 * (1.0 - social_norm)
+        study_norm = _norm(study_val, 0.0, 7.0)
+        stress_norm = _norm(stress_model_val, 1.0, 5.0)
+        cgpa_norm = _norm(cgpa_val, 0.0, 10.0)
+        rec['academic_stress_index'] = 0.4 * study_norm + 0.4 * stress_norm + 0.2 * (1.0 - cgpa_norm)
+        rec['stress_x_sleep'] = stress_model_val * sleep_val
+        rec['study_x_stress'] = study_val * stress_model_val
+        rec['cgpa_x_stress'] = cgpa_val * stress_model_val
+
         # Ensure model feature order matches training
         model_features = []
         model_features.extend(_lifestyle_meta.get('numeric_features', []))
@@ -831,10 +863,10 @@ def predict():
             total_score = min(max(total_score, 0), 40)
 
             # Threshold-aware risk bands (aligned with selected_threshold from metadata).
-            # This keeps categories sensitive in low-threshold screening models.
-            excellent_cut = min(1.0, threshold * 0.8)
-            moderate_cut = min(1.0, threshold * 1.3)
-            high_cut = min(1.0, threshold * 2.0)
+            # Use tighter boundaries to avoid over-labeling "Excellent".
+            excellent_cut = min(1.0, threshold * 0.45)
+            moderate_cut = min(1.0, threshold * 0.90)
+            high_cut = min(1.0, threshold * 1.35)
 
             if prob < excellent_cut:
                 ml_category = "Excellent Mental Well-being"
