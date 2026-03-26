@@ -73,36 +73,6 @@ python app.py
 
 Open `http://127.0.0.1:5000`.
 
-## Deploy on Render (Web Service)
-
-1. Push repository to GitHub.
-2. In Render, create a new **Web Service** from that repo.
-3. Set:
-     - **Environment**: `Python 3`
-     - **Build Command**: `pip install -r requirements.txt`
-     - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
-4. Add environment variables in Render:
-     - `DATABASE_URL` = Render PostgreSQL internal URL
-     - `FLASK_SECRET` = strong random value
-     - `GROQ_API_KEY` = your Groq API key
-     - `GROQ_MODEL` = optional override
-5. Deploy.
-
-### Deploy via Blueprint (Optional)
-
-This repo includes `render.yaml` for one-click Blueprint setup in Render.
-
-With Blueprint, a managed PostgreSQL service is provisioned and `DATABASE_URL` is auto-wired to the web service.
-You only need to set secret env vars (`FLASK_SECRET`, `GROQ_API_KEY`) in Render.
-
-### Notes for Render
-
-- `init_db()` now runs at app startup, so required tables are initialized under Gunicorn.
-- Do not rely on `.env.local` in Render; use Render Environment settings.
-- Use `.env.example` as the safe template for local setup.
-- Keep model files (`models/*.pkl`, `models/*.json`) committed so inference works in production.
-- For a strict final deployment checklist, use `RENDER_PREFLIGHT.md`.
-
 ## Optional model scripts
 
 Retrain model:
