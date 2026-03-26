@@ -3,7 +3,6 @@ services:
     name: mindsense-student-mental-health
     env: python
     plan: free
-    healthCheckPath: /
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     autoDeploy: true
@@ -18,7 +17,7 @@ services:
         sync: false
       - key: GROQ_MODEL
         value: llama-3.1-8b-instant
-  - type: pserv
-    name: mindsense-postgres
+
+databases:
+  - name: mindsense-postgres
     plan: free
-    ipAllowList: []
