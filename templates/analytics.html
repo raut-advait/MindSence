@@ -83,18 +83,24 @@
         </div>
 
         <div class="chart-container" style="margin-top:16px;">
-          <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="table"></i></span><span>Data Table</span></div>
+          <div class="analytics-section-title"><span class="analytics-title-icon icon-24"><i data-lucide="table"></i></span><span>All Assessments</span></div>
           <div class="responsive-table-wrap">
             <table class="responsive-table">
               <thead>
                 <tr style="border-bottom:1px solid var(--glass-border)">
                   <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="date">Date</th>
                   <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="score">Score</th>
-                  <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="result">Result</th>
+                  <th style="text-align:left;padding:10px;cursor:pointer;" data-sort="result">Status</th>
+                  <th style="text-align:left;padding:10px;">Trend</th>
                 </tr>
               </thead>
               <tbody id="analyticsRows"></tbody>
             </table>
+          </div>
+          <div id="analyticsPagination" class="table-pagination" style="margin-top:12px;display:none;">
+            <button type="button" class="btn btn-outline btn-sm" id="analyticsPrevBtn">Previous</button>
+            <div id="analyticsPageInfo" class="table-page-info">Page 1 of 1</div>
+            <button type="button" class="btn btn-outline btn-sm" id="analyticsNextBtn">Next</button>
           </div>
         </div>
       </div>
@@ -281,6 +287,44 @@
       font-weight: 700;
     }
 
+    .table-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
+      padding: 6px 4px 12px;
+    }
+
+    .table-pagination .btn {
+      min-width: 100px;
+    }
+
+    .table-page-info {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      min-width: 92px;
+      text-align: center;
+    }
+
+    @media (max-width: 639px) {
+      .table-pagination {
+        gap: 8px;
+      }
+
+      .table-pagination .btn {
+        min-width: 92px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .table-page-info {
+        width: 100%;
+        order: -1;
+      }
+    }
+
     .ai-empty {
       color: var(--text-muted);
     }
@@ -289,16 +333,58 @@
   <script>
     let sourceTests = [];
     let currentSort = { key: 'date', dir: 'desc' };
+    const ANALYTICS_PAGE_SIZE = 20;
+    let analyticsPage = 1;
+
+    function normalizeTests(rawTests) {
+      return (rawTests || []).map(t => {
+        const rawScore = Number(t && t.total_score);
+        return {
+          ...t,
+          date: String((t && t.date) || ''),
+          result: String((t && t.result) || 'Unknown'),
+          total_score: Number.isFinite(rawScore) ? rawScore : 0,
+          severity_shadow_label: t && t.severity_shadow_label ? String(t.severity_shadow_label) : ''
+        };
+      });
+    }
+
+    function parseDateValue(value) {
+      const dt = new Date(String(value || ''));
+      return Number.isNaN(dt.getTime()) ? null : dt;
+    }
+
+    function formatDateForTable(value) {
+      const dt = parseDateValue(value);
+      if (!dt) return '—';
+      return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatDateForAxis(value) {
+      const dt = parseDateValue(value);
+      if (!dt) return '—';
+      return dt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    }
 
     function iconForResult(result) {
-      if (result.includes('Excellent')) return '<span class="analytics-status-icon excellent" title="Excellent"><i data-lucide="shield-check"></i></span>';
-      if (result.includes('Moderate')) return '<span class="analytics-status-icon moderate" title="Moderate"><i data-lucide="circle-alert"></i></span>';
-      if (result.includes('High')) return '<span class="analytics-status-icon high" title="High"><i data-lucide="triangle-alert"></i></span>';
+      const text = String(result || '');
+      if (text.includes('Excellent')) return '<span class="analytics-status-icon excellent" title="Excellent"><i data-lucide="shield-check"></i></span>';
+      if (text.includes('Moderate')) return '<span class="analytics-status-icon moderate" title="Moderate"><i data-lucide="circle-alert"></i></span>';
+      if (text.includes('High')) return '<span class="analytics-status-icon high" title="High"><i data-lucide="triangle-alert"></i></span>';
       return '<span class="analytics-status-icon severe" title="Severe"><i data-lucide="siren"></i></span>';
     }
 
     function applyFilters() {
       return [...sourceTests];
+    }
+
+    function normalizeResultLabel(value) {
+      const text = String(value || '').toLowerCase();
+      if (text.includes('excellent')) return 'excellent';
+      if (text.includes('moderate')) return 'moderate';
+      if (text.includes('high')) return 'high';
+      if (text.includes('severe')) return 'severe';
+      return 'unknown';
     }
 
     function latestResultColor(result) {
@@ -308,19 +394,66 @@
       return '#ef4444';
     }
 
-    function renderTable(tests) {
-      const rows = document.getElementById('analyticsRows');
-      const sorted = [...tests].sort((a, b) => {
+    function getSortedTests(tests) {
+      return [...tests].sort((a, b) => {
         const d = currentSort.dir === 'asc' ? 1 : -1;
+        if (currentSort.key === 'date') {
+          const ta = parseDateValue(a.date)?.getTime() || 0;
+          const tb = parseDateValue(b.date)?.getTime() || 0;
+          return (ta - tb) * d;
+        }
         if (currentSort.key === 'score') return (a.total_score - b.total_score) * d;
         return String(a[currentSort.key] || '').localeCompare(String(b[currentSort.key] || '')) * d;
       });
-      rows.innerHTML = sorted.map(t => `
+    }
+
+    function updateAnalyticsPagination(totalRows) {
+      const wrap = document.getElementById('analyticsPagination');
+      const prevBtn = document.getElementById('analyticsPrevBtn');
+      const nextBtn = document.getElementById('analyticsNextBtn');
+      const info = document.getElementById('analyticsPageInfo');
+      if (!wrap || !prevBtn || !nextBtn || !info) return;
+
+      const totalPages = Math.max(1, Math.ceil(totalRows / ANALYTICS_PAGE_SIZE));
+      if (analyticsPage > totalPages) analyticsPage = totalPages;
+      if (analyticsPage < 1) analyticsPage = 1;
+
+      wrap.style.display = totalRows > ANALYTICS_PAGE_SIZE ? 'flex' : 'none';
+      info.textContent = `Page ${analyticsPage} of ${totalPages}`;
+      prevBtn.disabled = analyticsPage <= 1;
+      nextBtn.disabled = analyticsPage >= totalPages;
+    }
+
+    function renderTable(tests) {
+      const rows = document.getElementById('analyticsRows');
+      const sorted = getSortedTests(tests);
+      const totalRows = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(totalRows / ANALYTICS_PAGE_SIZE));
+      if (analyticsPage > totalPages) analyticsPage = totalPages;
+      if (analyticsPage < 1) analyticsPage = 1;
+
+      const start = (analyticsPage - 1) * ANALYTICS_PAGE_SIZE;
+      const paged = sorted.slice(start, start + ANALYTICS_PAGE_SIZE);
+
+      rows.innerHTML = paged.map((t, idx) => {
+        const absoluteIdx = start + idx;
+        let trend = 'No change';
+        if (absoluteIdx < sorted.length - 1) {
+          const prevScore = Number(sorted[absoluteIdx + 1].total_score) || 0;
+          const currentScore = Number(t.total_score) || 0;
+          if (currentScore < prevScore) trend = 'Improving';
+          else if (currentScore > prevScore) trend = 'Increased';
+        }
+
+        return `
         <tr style="border-bottom:1px solid var(--glass-border)">
-          <td data-label="Date" style="padding:10px;">${(t.date || '').split(' ')[0]}</td>
-          <td data-label="Score" style="padding:10px;">${t.total_score}</td>
-          <td data-label="Result" style="padding:10px;display:flex;align-items:center;gap:8px;">${iconForResult(t.result)}<span>${t.result}</span></td>
-        </tr>`).join('');
+          <td data-label="Date" style="padding:10px;">${formatDateForTable(t.date)}</td>
+          <td data-label="Score" style="padding:10px;">${t.total_score}/40</td>
+          <td data-label="Status" style="padding:10px;display:flex;align-items:center;gap:8px;">${iconForResult(t.result)}<span>${t.result}</span></td>
+          <td data-label="Trend" style="padding:10px;">${trend}</td>
+        </tr>`;
+      }).join('');
+      updateAnalyticsPagination(totalRows);
       lucide.createIcons();
     }
 
@@ -379,9 +512,43 @@
       return html;
     }
 
-    async function loadAiSummary() {
+    const aiSummaryCacheKey = `analytics_ai_summary_v1:${encodeURIComponent('{{ session["user"] if session.get("user") else "anon" }}')}`;
+
+    function getCachedAiSummary() {
+      try {
+        const raw = sessionStorage.getItem(aiSummaryCacheKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.summary !== 'string' || !parsed.summary.trim()) return null;
+        return parsed.summary;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function setCachedAiSummary(summaryText) {
+      try {
+        sessionStorage.setItem(aiSummaryCacheKey, JSON.stringify({
+          summary: String(summaryText || ''),
+          ts: Date.now()
+        }));
+      } catch (_) {
+        // Ignore storage failures (private mode/quota).
+      }
+    }
+
+    async function loadAiSummary(forceRefresh = false) {
       const target = document.getElementById('aiSummaryText');
       if (!target) return;
+
+      if (!forceRefresh) {
+        const cachedSummary = getCachedAiSummary();
+        if (cachedSummary) {
+          target.innerHTML = formatAiText(cachedSummary);
+          return;
+        }
+      }
+
       target.innerHTML = '<p class="ai-empty">Generating summary...</p>';
       try {
         const res = await fetch('/api/analytics-summary', {
@@ -394,7 +561,9 @@
           target.innerHTML = `<p class="ai-empty">${escapeHtml(data.error || 'Unable to generate summary right now.')}</p>`;
           return;
         }
-        target.innerHTML = formatAiText(data.summary || 'No summary available yet.');
+        const summaryText = data.summary || 'No summary available yet.';
+        setCachedAiSummary(summaryText);
+        target.innerHTML = formatAiText(summaryText);
       } catch (_) {
         target.innerHTML = '<p class="ai-empty">Unable to connect to AI service.</p>';
       }
@@ -403,7 +572,7 @@
     async function loadData() {
       const res = await fetch('/api/test-history');
       const data = await res.json();
-      sourceTests = data.tests || [];
+      sourceTests = normalizeTests(data.tests);
       const tests = applyFilters();
 
       document.getElementById('kpiCount').textContent = tests.length;
@@ -414,7 +583,7 @@
       latestEl.textContent = latestResult ? latestResult.split(' ')[0] : '—';
       latestEl.style.color = latestResultColor(latestResult);
 
-      const labels = tests.map(t => (t.date || '').split(' ')[0]).reverse();
+      const labels = tests.map(t => formatDateForAxis(t.date)).reverse();
       const scores = tests.map(t => t.total_score).reverse();
       new Chart(document.getElementById('trend').getContext('2d'), {
         type: 'line',
@@ -481,9 +650,25 @@
         const key = th.getAttribute('data-sort');
         if (currentSort.key === key) currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
         else { currentSort.key = key; currentSort.dir = 'asc'; }
+        analyticsPage = 1;
         renderTable(applyFilters());
       });
     });
+
+    const analyticsPrevBtn = document.getElementById('analyticsPrevBtn');
+    const analyticsNextBtn = document.getElementById('analyticsNextBtn');
+    if (analyticsPrevBtn) {
+      analyticsPrevBtn.addEventListener('click', () => {
+        analyticsPage = Math.max(1, analyticsPage - 1);
+        renderTable(applyFilters());
+      });
+    }
+    if (analyticsNextBtn) {
+      analyticsNextBtn.addEventListener('click', () => {
+        analyticsPage = analyticsPage + 1;
+        renderTable(applyFilters());
+      });
+    }
 
     document.getElementById('accountToggle').addEventListener('click', () => {
       document.getElementById('accountMenu').classList.toggle('open');
@@ -491,12 +676,12 @@
 
     const refreshSummaryBtn = document.getElementById('refreshSummaryBtn');
     if (refreshSummaryBtn) {
-      refreshSummaryBtn.addEventListener('click', loadAiSummary);
+      refreshSummaryBtn.addEventListener('click', () => loadAiSummary(true));
     }
 
     lucide.createIcons();
     loadData();
-    loadAiSummary();
+    loadAiSummary(false);
   </script>
   <script src="/static/theme.js"></script>
 </body>

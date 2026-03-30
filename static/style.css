@@ -265,9 +265,14 @@ body::before {
 }
 
 .navbar-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-secondary);
   text-decoration: none;
   padding: 8px 18px;
+  min-height: 40px;
+  line-height: 1;
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -749,13 +754,15 @@ body::before {
   background-repeat: no-repeat;
 }
 
-.form-group select option {
-  color: #0e2031;
-  background: #f3f8ff;
+.form-group select option,
+select option {
+  color: var(--text-primary);
+  background: var(--bg-mid);
 }
 
-.form-group select option[value=""] {
-  color: #607589;
+.form-group select option[value=""],
+select option[value=""] {
+  color: var(--text-muted);
 }
 
 .form-group input::placeholder { color: var(--text-muted); }

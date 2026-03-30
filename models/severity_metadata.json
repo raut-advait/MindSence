@@ -1,0 +1,20 @@
+{
+  "model_name": "severity_model.pkl",
+  "model_type": "lightgbm",
+  "task": "multiclass_severity_4level",
+  "dataset": "data\\processed\\merged_training_v1.csv",
+  "training_date": "2026-03-30T19:27:38.994295",
+  "training_metrics": {
+    "cv_f1_macro": 0.572834577936235,
+    "cv_recall_macro": 0.6521215641989099,
+    "cv_precision_macro": 0.5681216393062414,
+    "cv_accuracy": 0.69613634101638
+  },
+  "test_metrics": {
+    "accuracy": 0.6926213336840721,
+    "precision_macro": 0.5753744698523544,
+    "recall_macro": 0.6683014858000984,
+    "f1_macro": 0.5786827967694168,
+    "roc_auc_ovr": 0.8853857317661868
+  }
+}

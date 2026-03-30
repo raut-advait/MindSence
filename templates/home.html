@@ -94,6 +94,14 @@
       .about-card { min-height: auto; }
     }
 
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .about-grid .about-card:last-child {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(100%, calc((100% - 12px) / 2));
+      }
+    }
+
     @media (max-width: 767px) {
       .home-hero {
         padding-top: 82px !important;
@@ -140,11 +148,13 @@
 
       .hero-actions {
         flex-direction: column;
+        align-items: center;
       }
 
       .hero-actions .btn {
-        width: 100% !important;
+        width: min(100%, 300px) !important;
         max-width: 300px;
+        margin-inline: auto;
       }
     }
   </style>
@@ -176,19 +186,19 @@
 
       <div class="chart-container about-panel">
         <div class="about-header"><span class="about-icon"><i data-lucide="cpu"></i></span>About This Build</div>
-        <p class="about-subtitle">What this project is built for, in one glance.</p>
+        <p class="about-subtitle">What this project does today, in one glance.</p>
         <div class="about-grid">
           <article class="about-card">
-            <div class="about-card-top"><span class="about-icon"><i data-lucide="brain-circuit"></i></span>ML Training Focus</div>
-            <p class="about-copy">Built as an ML training application with logistic regression as the core baseline model for experimentation and learning.</p>
+            <div class="about-card-top"><span class="about-icon"><i data-lucide="brain-circuit"></i></span>Severity-Focused Prediction</div>
+            <p class="about-copy">Uses trained models to estimate mental wellness severity across multiple levels, with outputs aligned to practical risk categories.</p>
           </article>
           <article class="about-card">
             <div class="about-card-top"><span class="about-icon"><i data-lucide="clipboard-list"></i></span>Assessment Modes</div>
-            <p class="about-copy">Supports a quick daily mode and a full mode for deeper scoring and trend interpretation.</p>
+            <p class="about-copy">Includes a quick daily check-in and a full assessment, each designed to give clear feedback with consistent scoring.</p>
           </article>
           <article class="about-card">
-            <div class="about-card-top"><span class="about-icon"><i data-lucide="workflow"></i></span>Student Workflow</div>
-            <p class="about-copy">Take assessments, review history, inspect analytics, and use guided mental wellness resources.</p>
+            <div class="about-card-top"><span class="about-icon"><i data-lucide="workflow"></i></span>Student Experience</div>
+            <p class="about-copy">Track results in History and Analytics, view trends over time, and use in-app resources for day-to-day wellness support.</p>
           </article>
         </div>
       </div>

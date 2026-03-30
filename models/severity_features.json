@@ -1,0 +1,21 @@
+{
+  "numeric_features": [
+    "Age",
+    "CGPA",
+    "Sleep_Duration",
+    "Physical_Activity",
+    "Stress_Level",
+    "Anxiety_Score",
+    "Social_Support",
+    "Financial_Stress",
+    "Sleep_Quality",
+    "Diet_Quality",
+    "Counseling_Service_Use",
+    "Family_History"
+  ],
+  "categorical_features": [
+    "Gender",
+    "Department"
+  ],
+  "target": "Severity_Level"
+}

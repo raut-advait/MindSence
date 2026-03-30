@@ -1,61 +1,31 @@
-# MindSense — Student Mental Health Analyzer
+# MindSense - Student Mental Health Analyzer
 
-Production-ready Flask application for student wellness screening, mood tracking, assessment history, and AI-assisted insights.
+Flask + PostgreSQL application for student mental wellness screening with quick/full assessments, mood logs, analytics dashboards, and AI-generated summaries.
 
-## What this app includes
+## Current production behavior
 
-- Student authentication (register/login/logout)
-- Quick and full mental wellness assessments
-- Lifestyle-model risk prediction (XGBoost-based artifact)
-- Mood check-ins and history APIs
-- Analytics dashboard + AI summary/chat endpoints (Groq)
-- PostgreSQL-backed persistence
+- Authentication: register, login, logout
+- Quick assessment: severity-oriented quick check-in flow
+- Full assessment: 10-question severity-aligned flow
+- Mood logging: one log per day (strict mode)
+- Dashboards: History + Analytics (charts, trends, paginated tables)
+- AI features: analytics summary + assistant chat (Groq)
 
-## Current project structure
+## Runtime architecture
 
-```
-student_mental_health_analyzer/
-├── app.py
-├── db_helpers.py
-├── requirements.txt
-├── README.md
-├── .env.local                 # local-only; do not commit real secrets
-├── data/
-│   └── student_lifestyle_100k.csv
-├── models/
-│   ├── trained_model.pkl
-│   ├── preprocessor.pkl
-│   ├── metadata.json
-│   └── features.json
-├── scripts/
-│   ├── trained_model.py
-│   └── evaluate_lifestyle_model.py
-├── static/
-│   ├── style.css
-│   ├── theme.js
-│   └── favicon.svg
-└── templates/
-        ├── home.html
-        ├── login.html
-        ├── register.html
-        ├── student_dashboard.html
-        ├── test.html
-        ├── result.html
-        ├── history.html
-        ├── daily_tips.html
-        ├── resources.html
-        └── analytics.html
-```
+- Backend: `app.py` + `db_helpers.py`
+- Database: PostgreSQL (`DATABASE_URL` required)
+- Models loaded at runtime:
+    - `models/quick_model.pkl` + `models/quick_preprocessor.pkl`
+    - `models/severity_model.pkl` + `models/severity_preprocessor.pkl`
+- Frontend: server-rendered Jinja templates in `templates/`
 
-## Runtime requirements
+## Required environment variables
 
-- Python 3.10+
-- PostgreSQL database
-- Environment variables:
-    - `DATABASE_URL` (required)
-    - `FLASK_SECRET` (required for production)
-    - `GROQ_API_KEY` (required for AI summary/chat)
-    - `GROQ_MODEL` (optional, default: `llama-3.1-8b-instant`)
+- `DATABASE_URL` (required)
+- `FLASK_SECRET` (required in production)
+- `GROQ_API_KEY` (required for AI summary/chat)
+- `GROQ_MODEL` (optional, default: `llama-3.1-8b-instant`)
 
 ## Local run (Windows PowerShell)
 
@@ -71,29 +41,54 @@ $env:GROQ_API_KEY="replace-with-groq-key"
 python app.py
 ```
 
-Open `http://127.0.0.1:5000`.
+Open http://127.0.0.1:5000
 
-## Optional model scripts
+## Pre-deploy cleanup checklist
 
-Retrain model:
+1. Remove transient files: `__pycache__/`, `scripts/__pycache__/`.
+2. Ensure local secrets are not committed (`.env.local` stays local only).
+3. Confirm only required model artifacts exist in `models/` and are up to date.
+4. Verify quick/full form fields match save logic (`templates/test.html` vs `app.py`).
+5. Run a final smoke test locally: register/login, quick test, full test, history, analytics.
 
-```bash
-python scripts/trained_model.py
+## Additional step before deploying this version
+
+Run DB schema initialization/migration once against the target Render database so all additive columns exist:
+
+```powershell
+python -c "from db_helpers import init_db; print('init_db:', init_db())"
 ```
 
-Evaluate model:
+This is required before first traffic if your Render DB was created from an older schema.
 
-```bash
-python scripts/evaluate_lifestyle_model.py
-```
+## Deploy on Render
 
-## Security/production checklist
+Use `render.yaml` (Blueprint) or set manually:
 
-- Use a strong `FLASK_SECRET`
-- Use managed PostgreSQL with restricted access
-- Keep API keys in Render env vars only
-- Prefer HTTPS-only cookies at proxy level (Render default HTTPS)
-- Rotate keys if leaked
+- Build command: `pip install -r requirements.txt`
+- Start command: `gunicorn app:app --bind 0.0.0.0:$PORT`
+
+Set env vars in Render:
+
+- `FLASK_SECRET`
+- `GROQ_API_KEY`
+- `GROQ_MODEL` (optional)
+
+`DATABASE_URL` is provided automatically when using the database defined in `render.yaml`.
+
+## Post-deploy smoke test
+
+1. Open app root and login/register
+2. Submit one quick assessment and one full assessment
+3. Verify History and Analytics charts/tables load
+4. Verify AI Summary loads and Refresh Summary works
+
+## Notes on datasets and scripts
+
+- Bundled training datasets were removed from this deployment branch to keep the repo lightweight.
+- Legacy lifestyle-model scripts and dataset-generation scripts were removed.
+- Runtime does not require `data/` contents; deployment uses prebuilt artifacts under `models/`.
+- Current retained scripts (if present) are optional maintenance utilities, not required for serving.
 
 ## Disclaimer
 

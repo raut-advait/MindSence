@@ -128,110 +128,128 @@
                     <input type="hidden" name="mode" id="modeInput" value="quick">
 
                     <div class="question-block">
-                        <div class="question-label">Last night, how many hours did you sleep?</div>
+                        <div class="question-label">How much did you sleep last night?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" id="sleep_q1" name="Sleep_Duration" value="2" required><label for="sleep_q1"><span class="value-label">Less than 4 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sleep_q2" name="Sleep_Duration" value="5"><label for="sleep_q2"><span class="value-label">About 4–6 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sleep_q3" name="Sleep_Duration" value="7"><label for="sleep_q3"><span class="value-label">About 6–8 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sleep_q4" name="Sleep_Duration" value="9"><label for="sleep_q4"><span class="value-label">More than 8 hours</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleep_q1" name="Sleep_Duration" value="2" required><label for="sleep_q1"><span class="value-label">Very little sleep</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleep_q2" name="Sleep_Duration" value="5"><label for="sleep_q2"><span class="value-label">A bit of sleep</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleep_q3" name="Sleep_Duration" value="7"><label for="sleep_q3"><span class="value-label">Okay sleep</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleep_q4" name="Sleep_Duration" value="9"><label for="sleep_q4"><span class="value-label">Good sleep</span></label></div>
+                        </div>
+                    </div>
+
+                    <div class="question-block quick-only">
+                        <div class="question-label">How much did you study today?</div>
+                        <div class="likert-scale">
+                            <div class="likert-option"><input type="radio" id="study_q1" name="Study_Hours" value="1" required><label for="study_q1"><span class="value-label">Very little</span></label></div>
+                            <div class="likert-option"><input type="radio" id="study_q2" name="Study_Hours" value="3"><label for="study_q2"><span class="value-label">Some study</span></label></div>
+                            <div class="likert-option"><input type="radio" id="study_q3" name="Study_Hours" value="5"><label for="study_q3"><span class="value-label">A lot</span></label></div>
+                            <div class="likert-option"><input type="radio" id="study_q4" name="Study_Hours" value="7"><label for="study_q4"><span class="value-label">Very heavy study</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block">
-                        <div class="question-label">Roughly how many hours did you spend studying today?</div>
+                        <div class="question-label">How much time did you spend on social media today?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" id="study_q1" name="Study_Hours" value="1" required><label for="study_q1"><span class="value-label">Less than 2 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="study_q2" name="Study_Hours" value="3"><label for="study_q2"><span class="value-label">Around 2–4 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="study_q3" name="Study_Hours" value="5"><label for="study_q3"><span class="value-label">Around 4–6 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="study_q4" name="Study_Hours" value="7"><label for="study_q4"><span class="value-label">More than 6 hours</span></label></div>
+                            <div class="likert-option"><input type="radio" id="social_q1" name="Social_Media" value="0.5" required><label for="social_q1"><span class="value-label">Very little</span></label></div>
+                            <div class="likert-option"><input type="radio" id="social_q2" name="Social_Media" value="2"><label for="social_q2"><span class="value-label">Some time</span></label></div>
+                            <div class="likert-option"><input type="radio" id="social_q3" name="Social_Media" value="4"><label for="social_q3"><span class="value-label">A lot of time</span></label></div>
+                            <div class="likert-option"><input type="radio" id="social_q4" name="Social_Media" value="6"><label for="social_q4"><span class="value-label">Most of free time</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block">
-                        <div class="question-label">Approximately how long were you on social media today?</div>
+                        <div class="question-label">How active were you this week?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" id="social_q1" name="Social_Media" value="0.5" required><label for="social_q1"><span class="value-label">Less than 1 hour</span></label></div>
-                            <div class="likert-option"><input type="radio" id="social_q2" name="Social_Media" value="2"><label for="social_q2"><span class="value-label">1–3 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="social_q3" name="Social_Media" value="4"><label for="social_q3"><span class="value-label">3–5 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="social_q4" name="Social_Media" value="6"><label for="social_q4"><span class="value-label">More than 5 hours</span></label></div>
+                            <div class="likert-option"><input type="radio" id="activity_q1" name="Physical_Activity" value="0.5" required><label for="activity_q1"><span class="value-label">Not active</span></label></div>
+                            <div class="likert-option"><input type="radio" id="activity_q2" name="Physical_Activity" value="1.5"><label for="activity_q2"><span class="value-label">A little active</span></label></div>
+                            <div class="likert-option"><input type="radio" id="activity_q3" name="Physical_Activity" value="2.5"><label for="activity_q3"><span class="value-label">Quite active</span></label></div>
+                            <div class="likert-option"><input type="radio" id="activity_q4" name="Physical_Activity" value="3.5"><label for="activity_q4"><span class="value-label">Very active</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block">
-                        <div class="question-label">Total hours of physical activity during the past week</div>
+                        <div class="question-label">How stressed did you feel today?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" id="activity_q1" name="Physical_Activity" value="0.5" required><label for="activity_q1"><span class="value-label">Less than 1 hour</span></label></div>
-                            <div class="likert-option"><input type="radio" id="activity_q2" name="Physical_Activity" value="1.5"><label for="activity_q2"><span class="value-label">1–2 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="activity_q3" name="Physical_Activity" value="2.5"><label for="activity_q3"><span class="value-label">2–3 hours</span></label></div>
-                            <div class="likert-option"><input type="radio" id="activity_q4" name="Physical_Activity" value="3.5"><label for="activity_q4"><span class="value-label">More than 3 hours</span></label></div>
-                        </div>
-                    </div>
-
-                    <div class="question-block">
-                        <div class="question-label">On a scale of 1–5, how stressed did you feel today?</div>
-                        <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" id="stress_q1" name="Stress_Level" value="1" required><label for="stress_q1"><span class="value-label">1 – No stress</span></label></div>
-                            <div class="likert-option"><input type="radio" id="stress_q2" name="Stress_Level" value="2"><label for="stress_q2"><span class="value-label">2 – Slight stress</span></label></div>
-                            <div class="likert-option"><input type="radio" id="stress_q3" name="Stress_Level" value="3"><label for="stress_q3"><span class="value-label">3 – Moderate stress</span></label></div>
-                            <div class="likert-option"><input type="radio" id="stress_q4" name="Stress_Level" value="4"><label for="stress_q4"><span class="value-label">4 – High stress</span></label></div>
-                            <div class="likert-option"><input type="radio" id="stress_q5" name="Stress_Level" value="5"><label for="stress_q5"><span class="value-label">5 – Extreme stress</span></label></div>
+                            <div class="likert-option"><input type="radio" id="stress_q1" name="Stress_Level" value="1" required><label for="stress_q1"><span class="value-label">Very low</span></label></div>
+                            <div class="likert-option"><input type="radio" id="stress_q2" name="Stress_Level" value="2"><label for="stress_q2"><span class="value-label">Low</span></label></div>
+                            <div class="likert-option"><input type="radio" id="stress_q3" name="Stress_Level" value="3"><label for="stress_q3"><span class="value-label">Medium</span></label></div>
+                            <div class="likert-option"><input type="radio" id="stress_q4" name="Stress_Level" value="4"><label for="stress_q4"><span class="value-label">High</span></label></div>
+                            <div class="likert-option"><input type="radio" id="stress_q5" name="Stress_Level" value="5"><label for="stress_q5"><span class="value-label">Very high</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block full-question">
-                        <div class="question-label">On a scale of 1–5, how anxious did you feel today?</div>
+                        <div class="question-label">How anxious did you feel today?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" class="full-required" id="anx_q1" name="Anxiety_Level" value="1"><label for="anx_q1"><span class="value-label">1 – Not anxious</span></label></div>
-                            <div class="likert-option"><input type="radio" id="anx_q2" name="Anxiety_Level" value="2"><label for="anx_q2"><span class="value-label">2 – Slightly anxious</span></label></div>
-                            <div class="likert-option"><input type="radio" id="anx_q3" name="Anxiety_Level" value="3"><label for="anx_q3"><span class="value-label">3 – Somewhat anxious</span></label></div>
-                            <div class="likert-option"><input type="radio" id="anx_q4" name="Anxiety_Level" value="4"><label for="anx_q4"><span class="value-label">4 – Quite anxious</span></label></div>
-                            <div class="likert-option"><input type="radio" id="anx_q5" name="Anxiety_Level" value="5"><label for="anx_q5"><span class="value-label">5 – Extremely anxious</span></label></div>
+                            <div class="likert-option"><input type="radio" class="full-required" id="anx_q1" name="Anxiety_Score" value="1"><label for="anx_q1"><span class="value-label">Very low</span></label></div>
+                            <div class="likert-option"><input type="radio" id="anx_q2" name="Anxiety_Score" value="2"><label for="anx_q2"><span class="value-label">Low</span></label></div>
+                            <div class="likert-option"><input type="radio" id="anx_q3" name="Anxiety_Score" value="3"><label for="anx_q3"><span class="value-label">Medium</span></label></div>
+                            <div class="likert-option"><input type="radio" id="anx_q4" name="Anxiety_Score" value="4"><label for="anx_q4"><span class="value-label">High</span></label></div>
+                            <div class="likert-option"><input type="radio" id="anx_q5" name="Anxiety_Score" value="5"><label for="anx_q5"><span class="value-label">Very high</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block full-question">
-                        <div class="question-label">How would you rate your focus today (1–5)?</div>
+                        <div class="question-label">How much support did you feel from people close to you?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" class="full-required" id="focus_q1" name="Focus_Level" value="1"><label for="focus_q1"><span class="value-label">1 – Very poor</span></label></div>
-                            <div class="likert-option"><input type="radio" id="focus_q2" name="Focus_Level" value="2"><label for="focus_q2"><span class="value-label">2 – Below average</span></label></div>
-                            <div class="likert-option"><input type="radio" id="focus_q3" name="Focus_Level" value="3"><label for="focus_q3"><span class="value-label">3 – Average</span></label></div>
-                            <div class="likert-option"><input type="radio" id="focus_q4" name="Focus_Level" value="4"><label for="focus_q4"><span class="value-label">4 – Good</span></label></div>
-                            <div class="likert-option"><input type="radio" id="focus_q5" name="Focus_Level" value="5"><label for="focus_q5"><span class="value-label">5 – Excellent</span></label></div>
+                            <div class="likert-option"><input type="radio" class="full-required" id="socialsup_q1" name="Social_Support" value="1"><label for="socialsup_q1"><span class="value-label">Not at all</span></label></div>
+                            <div class="likert-option"><input type="radio" id="socialsup_q2" name="Social_Support" value="2"><label for="socialsup_q2"><span class="value-label">A little</span></label></div>
+                            <div class="likert-option"><input type="radio" id="socialsup_q3" name="Social_Support" value="3"><label for="socialsup_q3"><span class="value-label">Some</span></label></div>
+                            <div class="likert-option"><input type="radio" id="socialsup_q4" name="Social_Support" value="4"><label for="socialsup_q4"><span class="value-label">A lot</span></label></div>
+                            <div class="likert-option"><input type="radio" id="socialsup_q5" name="Social_Support" value="5"><label for="socialsup_q5"><span class="value-label">Very strong</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block full-question">
-                        <div class="question-label">How supported do you feel by friends/family (1–5)?</div>
+                        <div class="question-label">How good has your sleep quality been lately?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" class="full-required" id="socialsup_q1" name="Social_Support" value="1"><label for="socialsup_q1"><span class="value-label">1 – Not supported</span></label></div>
-                            <div class="likert-option"><input type="radio" id="socialsup_q2" name="Social_Support" value="2"><label for="socialsup_q2"><span class="value-label">2 – Slightly supported</span></label></div>
-                            <div class="likert-option"><input type="radio" id="socialsup_q3" name="Social_Support" value="3"><label for="socialsup_q3"><span class="value-label">3 – Somewhat supported</span></label></div>
-                            <div class="likert-option"><input type="radio" id="socialsup_q4" name="Social_Support" value="4"><label for="socialsup_q4"><span class="value-label">4 – Well supported</span></label></div>
-                            <div class="likert-option"><input type="radio" id="socialsup_q5" name="Social_Support" value="5"><label for="socialsup_q5"><span class="value-label">5 – Very supported</span></label></div>
+                            <div class="likert-option"><input type="radio" class="full-required" id="sleepqual_q1" name="Sleep_Quality" value="1"><label for="sleepqual_q1"><span class="value-label">Very poor</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleepqual_q2" name="Sleep_Quality" value="2"><label for="sleepqual_q2"><span class="value-label">Poor</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleepqual_q3" name="Sleep_Quality" value="3"><label for="sleepqual_q3"><span class="value-label">Okay</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleepqual_q4" name="Sleep_Quality" value="4"><label for="sleepqual_q4"><span class="value-label">Good</span></label></div>
+                            <div class="likert-option"><input type="radio" id="sleepqual_q5" name="Sleep_Quality" value="5"><label for="sleepqual_q5"><span class="value-label">Very good</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block full-question">
-                        <div class="question-label">On a scale of 1–5, how low/high was your mood today?</div>
+                        <div class="question-label">How healthy has your food been lately?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" class="full-required" id="sad_q1" name="Sadness_Level" value="1"><label for="sad_q1"><span class="value-label">1 – Very low sadness</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sad_q2" name="Sadness_Level" value="2"><label for="sad_q2"><span class="value-label">2 – Slightly low</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sad_q3" name="Sadness_Level" value="3"><label for="sad_q3"><span class="value-label">3 – Neutral</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sad_q4" name="Sadness_Level" value="4"><label for="sad_q4"><span class="value-label">4 – Somewhat sad</span></label></div>
-                            <div class="likert-option"><input type="radio" id="sad_q5" name="Sadness_Level" value="5"><label for="sad_q5"><span class="value-label">5 – Very sad</span></label></div>
+                            <div class="likert-option"><input type="radio" class="full-required" id="diet_q1" name="Diet_Quality" value="1"><label for="diet_q1"><span class="value-label">Very unhealthy</span></label></div>
+                            <div class="likert-option"><input type="radio" id="diet_q2" name="Diet_Quality" value="2"><label for="diet_q2"><span class="value-label">Mostly unhealthy</span></label></div>
+                            <div class="likert-option"><input type="radio" id="diet_q3" name="Diet_Quality" value="3"><label for="diet_q3"><span class="value-label">Mixed</span></label></div>
+                            <div class="likert-option"><input type="radio" id="diet_q4" name="Diet_Quality" value="4"><label for="diet_q4"><span class="value-label">Mostly healthy</span></label></div>
+                            <div class="likert-option"><input type="radio" id="diet_q5" name="Diet_Quality" value="5"><label for="diet_q5"><span class="value-label">Very healthy</span></label></div>
                         </div>
                     </div>
 
                     <div class="question-block full-question">
-                        <div class="question-label">How would you rate your energy level today (1–5)?</div>
+                        <div class="question-label">How much do money problems affect your daily life?</div>
                         <div class="likert-scale">
-                            <div class="likert-option"><input type="radio" class="full-required" id="energy_q1" name="Energy_Level" value="1"><label for="energy_q1"><span class="value-label">1 – Very low</span></label></div>
-                            <div class="likert-option"><input type="radio" id="energy_q2" name="Energy_Level" value="2"><label for="energy_q2"><span class="value-label">2 – Low</span></label></div>
-                            <div class="likert-option"><input type="radio" id="energy_q3" name="Energy_Level" value="3"><label for="energy_q3"><span class="value-label">3 – Moderate</span></label></div>
-                            <div class="likert-option"><input type="radio" id="energy_q4" name="Energy_Level" value="4"><label for="energy_q4"><span class="value-label">4 – High</span></label></div>
-                            <div class="likert-option"><input type="radio" id="energy_q5" name="Energy_Level" value="5"><label for="energy_q5"><span class="value-label">5 – Very high</span></label></div>
+                            <div class="likert-option"><input type="radio" class="full-required" id="fin_q1" name="Financial_Stress" value="1"><label for="fin_q1"><span class="value-label">Not at all</span></label></div>
+                            <div class="likert-option"><input type="radio" id="fin_q2" name="Financial_Stress" value="2"><label for="fin_q2"><span class="value-label">A little</span></label></div>
+                            <div class="likert-option"><input type="radio" id="fin_q3" name="Financial_Stress" value="3"><label for="fin_q3"><span class="value-label">Some</span></label></div>
+                            <div class="likert-option"><input type="radio" id="fin_q4" name="Financial_Stress" value="4"><label for="fin_q4"><span class="value-label">A lot</span></label></div>
+                            <div class="likert-option"><input type="radio" id="fin_q5" name="Financial_Stress" value="5"><label for="fin_q5"><span class="value-label">Very much</span></label></div>
                         </div>
                     </div>
+
+                    <div class="question-block full-question">
+                        <div class="question-label">When things felt heavy today, how often did you reach out for support?</div>
+                        <div class="likert-scale">
+                            <div class="likert-option"><input type="radio" class="full-required" id="counsel_q1" name="Counseling_Service_Use" value="Never"><label for="counsel_q1"><span class="value-label">Not at all</span></label></div>
+                            <div class="likert-option"><input type="radio" id="counsel_q2" name="Counseling_Service_Use" value="Occasionally"><label for="counsel_q2"><span class="value-label">A little / once</span></label></div>
+                            <div class="likert-option"><input type="radio" id="counsel_q3" name="Counseling_Service_Use" value="Frequently"><label for="counsel_q3"><span class="value-label">More than once</span></label></div>
+                        </div>
+                    </div>
+
+                    <div class="question-block full-question">
+                        <div class="question-label">Did your home or family situation affect your mood today?</div>
+                        <div class="likert-scale">
+                            <div class="likert-option"><input type="radio" class="full-required" id="family_q1" name="Family_History" value="Yes"><label for="family_q1"><span class="value-label">Yes, it affected me</span></label></div>
+                            <div class="likert-option"><input type="radio" id="family_q2" name="Family_History" value="No"><label for="family_q2"><span class="value-label">No, it did not</span></label></div>
+                        </div>
+                    </div>
+
 
                     <div class="submit-wrap">
                         <button type="submit" class="btn btn-primary" id="submitBtn" style="padding:14px 32px;">Analyze Results</button>
@@ -267,8 +285,14 @@
 
         if (badgeEl) badgeEl.textContent = isFull ? 'Full Assessment (10 Questions)' : 'Daily Check-In (5 Questions)';
         if (titleEl) titleEl.textContent = isFull ? 'Full Mental Wellness Assessment' : 'Daily Mental Wellness Check-In';
-        if (subtitleEl) subtitleEl.textContent = isFull ? 'Answer all 10 questions for a deeper snapshot.' : 'Answer 5 quick daily questions.';
-        if (captionEl) captionEl.textContent = isFull ? 'Full mode includes 10 questions.' : 'Daily mode includes 5 quick questions.';
+        if (subtitleEl) subtitleEl.textContent = isFull ? 'Answer all 10 severity-aligned questions for focused evaluation.' : 'Answer 5 quick daily questions.';
+        if (captionEl) captionEl.textContent = isFull ? 'Full mode includes 10 severity-aligned questions.' : 'Daily mode includes 5 quick questions.';
+
+        document.querySelectorAll('.quick-only').forEach(el => {
+            const show = !isFull;
+            el.style.display = show ? '' : 'none';
+            el.querySelectorAll('input, select, textarea').forEach(inp => inp.disabled = !show);
+        });
 
         document.querySelectorAll('.full-question').forEach(el => {
             const show = isFull;
@@ -287,6 +311,7 @@
         document.querySelectorAll('.question-block').forEach(block => {
             if (block.style.display === 'none') return;
             block.querySelectorAll('input[type="radio"]').forEach(inp => names.add(inp.name));
+            block.querySelectorAll('select').forEach(sel => names.add(sel.name));
         });
         return [...names];
     }
@@ -296,7 +321,13 @@
         const names = getVisibleQuestionNames();
         names.forEach(name => {
             const checked = document.querySelector(`input[name="${name}"]:checked`);
-            map[name] = checked ? Number(checked.value) : null;
+            if (checked) {
+                const maybeNumber = Number(checked.value);
+                map[name] = Number.isFinite(maybeNumber) ? maybeNumber : checked.value;
+                return;
+            }
+            const selected = document.querySelector(`select[name="${name}"]`);
+            map[name] = selected ? selected.value : null;
         });
         return map;
     }
@@ -307,6 +338,14 @@
         const urlMode = readUrlMode();
         if (urlMode === 'full' || urlMode === 'quick') mode = urlMode;
         applyMode(mode);
+    }
+
+    const testForm = document.getElementById('testForm');
+    if (testForm) {
+        testForm.addEventListener('submit', () => {
+            const fullVisible = Array.from(document.querySelectorAll('.full-question')).some(el => el.style.display !== 'none');
+            if (modeField) modeField.value = fullVisible ? 'full' : 'quick';
+        });
     }
 
     if (dailyBtn) dailyBtn.addEventListener('click', () => applyMode('quick'));

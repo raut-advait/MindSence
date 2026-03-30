@@ -1,0 +1,17 @@
+{
+  "quick_features": [
+    "Sleep_Duration",
+    "Study_Hours",
+    "Social_Media",
+    "Physical_Activity",
+    "Stress_Level",
+    "Age",
+    "CGPA",
+    "Gender",
+    "Department",
+    "sleep_study_ratio",
+    "stress_x_sleep",
+    "study_x_stress",
+    "activity_social_balance"
+  ]
+}

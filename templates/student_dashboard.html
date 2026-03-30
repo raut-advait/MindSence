@@ -456,7 +456,7 @@
                         <div class="kpi-sparkline"><span style="height:60%"></span><span style="height:56%"></span><span style="height:40%"></span><span style="height:48%"></span><span style="height:44%"></span></div>
                     </article>
                     <article class="kpi-card">
-                        <div class="kpi-value">1</div>
+                        <div class="kpi-value">{{ current_streak if current_streak is defined else 0 }}</div>
                         <div class="kpi-label">Current Streak</div>
                         <div class="kpi-sparkline"><span style="height:18%"></span><span style="height:34%"></span><span style="height:45%"></span><span style="height:62%"></span><span style="height:72%"></span></div>
                     </article>
@@ -557,7 +557,7 @@
         '😐': { label: 'Okay', icon: 'meh' },
         '😰': { label: 'Stressed', icon: 'alarm-clock' },
         '😢': { label: 'Sad', icon: 'cloud-rain' },
-        '😤': { label: 'Stressed', icon: 'alarm-clock' }
+        '😤': { label: 'Amazing', icon: 'laugh' }
     };
 
     function getMoodMeta(value) {
@@ -627,7 +627,7 @@
                 if (latestDate === today) {
                     disableMoodButtons();
                     const msgBox = document.getElementById('moodMessage');
-                    const moodMeta = getMoodMeta(latestMood.mood);
+                    const moodMeta = getMoodMeta(latestMood.mood_label || latestMood.mood);
                     msgBox.innerHTML = `<strong>Info:</strong> You already logged today: <span class="icon-16" style="display:inline-flex;vertical-align:middle;"><i data-lucide="${moodMeta.icon}"></i></span> ${moodMeta.label}`;
                     msgBox.style.display = 'block';
                     lucide.createIcons();
@@ -649,7 +649,7 @@
                 const list = document.getElementById('mood-history-list');
                 list.innerHTML = data.moods.slice(0, 10).map(m => {
                     const date = new Date(m.created_at).toLocaleDateString();
-                    const moodMeta = getMoodMeta(m.mood);
+                    const moodMeta = getMoodMeta(m.mood_label || m.mood);
                     return `<div class="history-tag"><span class="icon-16" style="display:inline-flex;vertical-align:middle;"><i data-lucide="${moodMeta.icon}"></i></span> ${moodMeta.label}<br><span style="color:var(--text-muted);">${date}</span></div>`;
                 }).join('');
                 lucide.createIcons();

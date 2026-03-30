@@ -188,13 +188,29 @@
 
                 <h2 class="result-title {% if status_label == 'Excellent' %}result-title-low{% elif status_label == 'Moderate' %}result-title-moderate{% else %}result-title-high{% endif %}">{{ result }}</h2>
                 <div style="margin-bottom:14px;color:var(--text-muted);">Score: <strong>{{ score }}/40</strong></div>
+                <div style="margin:-8px 0 14px;color:var(--text-muted);font-size:0.85rem;">
+                    Mode: <strong>{{ assessment_mode|default('unknown')|capitalize }}</strong>
+                    | Source:
+                    <strong>{% if assessment_mode == 'full' %}Severity Model{% else %}Quick Model{% endif %}</strong>
+                </div>
                 <p style="margin-bottom:18px;color:var(--text-secondary);line-height:1.5;">{{ description }}</p>
 
                 <div class="result-stats-grid">
                     <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ score }}</div><div class="stat-card-label">Raw Score</div></div>
                     <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ ((score / 40) * 100)|round(1) }}%</div><div class="stat-card-label">Risk Index</div></div>
                     <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{{ status_label }}</div><div class="stat-card-label">Category</div></div>
-                    <div class="stat-card"><div style="font-size:1.3rem;font-weight:800;">{% if ml_probability is defined and ml_probability is not none %}{{ (ml_probability * 100)|round(1) }}%{% else %}N/A{% endif %}</div><div class="stat-card-label">Model Probability</div></div>
+                    <div class="stat-card">
+                        <div style="font-size:1.3rem;font-weight:800;">
+                            {% if display_probability is defined and display_probability is not none %}
+                                {{ (display_probability * 100)|round(1) }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                        <div class="stat-card-label">
+                            {{ display_probability_label if display_probability_label is defined else 'Model Probability' }}
+                        </div>
+                    </div>
                 </div>
 
                 <div class="chart-container result-subpanel">

@@ -61,7 +61,7 @@
 
                 <div class="form-group">
                     <label for="age">Age (years)</label>
-                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="hourglass"></i></span><input type="number" id="age" name="age" min="15" max="80"></div>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="hourglass"></i></span><input type="number" id="age" name="age" min="15" max="80" readonly></div>
                 </div>
 
                 <div class="form-group">
@@ -78,29 +78,12 @@
 
                 <div class="form-group">
                     <label for="department">Department / Faculty</label>
-                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="building-2"></i></span>
-                        <select id="department" name="department">
-                            <option value="" selected>Select department</option>
-                            <option value="Computer Engineering">Computer Engineering</option>
-                            <option value="Information Technology (IT)">Information Technology (IT)</option>
-                            <option value="CSEDS">CSEDS</option>
-                            <option value="AIML">AIML</option>
-                            <option value="AIDS">AIDS</option>
-                        </select>
-                    </div>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="building-2"></i></span><input type="text" id="department" name="department" placeholder="Enter your department"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="academic_year">Year</label>
-                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="layers"></i></span>
-                        <select id="academic_year" name="academic_year">
-                            <option value="" selected>Select year</option>
-                            <option value="FE">FE</option>
-                            <option value="SE">SE</option>
-                            <option value="TE">TE</option>
-                            <option value="BE">BE</option>
-                        </select>
-                    </div>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="layers"></i></span><input type="text" id="academic_year" name="academic_year" placeholder="Enter your year"></div>
                 </div>
 
                 <div class="form-group">
@@ -117,6 +100,32 @@
 </div>
 
 <script>
+    function computeAgeFromDob(dobValue) {
+        if (!dobValue) return '';
+        const dob = new Date(dobValue + 'T00:00:00');
+        if (Number.isNaN(dob.getTime())) return '';
+
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const monthDiff = now.getMonth() - dob.getMonth();
+        const dayDiff = now.getDate() - dob.getDate();
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1;
+
+        if (age < 0) return '';
+        return String(age);
+    }
+
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    if (dobInput && ageInput) {
+        const syncAge = () => {
+            ageInput.value = computeAgeFromDob(dobInput.value);
+        };
+        dobInput.addEventListener('change', syncAge);
+        dobInput.addEventListener('input', syncAge);
+        syncAge();
+    }
+
     document.getElementById('registerForm').addEventListener('submit', function (e) {
         const name = document.getElementById('name').value.trim();
         const password = document.getElementById('password').value;

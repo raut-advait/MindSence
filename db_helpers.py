@@ -91,6 +91,38 @@ def _scalar(row):
     return row[0]
 
 
+def _parse_mood_label_from_note(note: Optional[str]) -> Optional[str]:
+    if not note:
+        return None
+    match = re.search(r"(?:^|\n)__mood_label__:(Amazing|Good|Okay|Stressed|Anxious|Sad)(?:\n|$)", str(note), re.IGNORECASE)
+    if not match:
+        return None
+    return match.group(1).title()
+
+
+def _resolve_mood_label(mood_value: Optional[str], note: Optional[str] = None) -> str:
+    label_from_note = _parse_mood_label_from_note(note)
+    if label_from_note:
+        return label_from_note
+
+    fallback = {
+        "😊": "Good",
+        "😐": "Okay",
+        "😰": "Stressed",
+        "😢": "Sad",
+        "😤": "Amazing",
+    }
+    return fallback.get((mood_value or "").strip(), "Mood")
+
+
+def _compose_mood_note(label: str, note: Optional[str]) -> str:
+    clean_note = (note or "").strip()
+    marker = f"__mood_label__:{label}"
+    if not clean_note:
+        return marker
+    return f"{marker}\n{clean_note}"
+
+
 def get_db_connection():
     database_url = _database_url()
 
@@ -177,6 +209,20 @@ def init_db() -> bool:
             """,
         )
         _execute(cur, "CREATE INDEX IF NOT EXISTS idx_full_student_date ON full_assessments(student_id, created_at)")
+
+        # Additive migration for dataset-aligned full-assessment fields and shadow outputs.
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS sleep_quality DOUBLE PRECISION")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS diet_quality DOUBLE PRECISION")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS financial_stress DOUBLE PRECISION")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS counseling_service_use TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS family_history TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS residence_type TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS relationship_status TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS substance_use TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS chronic_illness TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS severity_shadow_label TEXT")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS severity_shadow_confidence DOUBLE PRECISION")
+        _execute(cur, "ALTER TABLE full_assessments ADD COLUMN IF NOT EXISTS severity_shadow_class INTEGER")
 
         _execute(
             cur,
@@ -376,10 +422,14 @@ def create_full_assessment(
     result_category: str,
     ml_probability: Optional[float] = None,
     ml_threshold: Optional[float] = None,
+    canonical_fields: Optional[Dict] = None,
+    shadow_payload: Optional[Dict] = None,
 ) -> Optional[int]:
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor) if _is_postgres_conn(conn) else conn.cursor()
     try:
+        canonical_fields = canonical_fields or {}
+        shadow_payload = shadow_payload or {}
         assessment_id = _insert_and_get_id(
             conn,
             cur,
@@ -387,8 +437,11 @@ def create_full_assessment(
             INSERT INTO full_assessments
             (student_id, stress_level, sleep_duration, study_hours, physical_activity, social_media,
              anxiety, focus, social_support, sadness, energy, overwhelm, total_score, result_category,
-             ml_probability, ml_threshold, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ml_probability, ml_threshold, sleep_quality, diet_quality, financial_stress,
+             counseling_service_use, family_history, residence_type, relationship_status,
+             substance_use, chronic_illness, severity_shadow_label, severity_shadow_confidence,
+             severity_shadow_class, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 student_id,
@@ -407,6 +460,18 @@ def create_full_assessment(
                 result_category,
                 ml_probability,
                 ml_threshold,
+                canonical_fields.get("sleep_quality"),
+                canonical_fields.get("diet_quality"),
+                canonical_fields.get("financial_stress"),
+                canonical_fields.get("counseling_service_use"),
+                canonical_fields.get("family_history"),
+                canonical_fields.get("residence_type"),
+                canonical_fields.get("relationship_status"),
+                canonical_fields.get("substance_use"),
+                canonical_fields.get("chronic_illness"),
+                shadow_payload.get("severity_shadow_label"),
+                shadow_payload.get("severity_shadow_confidence"),
+                shadow_payload.get("severity_shadow_class"),
                 get_ist_timestamp(),
             ),
         )
@@ -480,31 +545,34 @@ def record_mood(student_id: int, mood: str, note: Optional[str] = None) -> Tuple
     cur = conn.cursor(cursor_factory=RealDictCursor) if _is_postgres_conn(conn) else conn.cursor()
     try:
         mood_label_to_emoji = {
-            "amazing": "😊",
+            "amazing": "😤",
             "good": "😊",
             "okay": "😐",
             "stressed": "😰",
             "anxious": "😰",
             "sad": "😢",
         }
-        emoji_to_label = {
-            "😊": "Good",
-            "😐": "Okay",
-            "😰": "Stressed",
-            "😢": "Sad",
-            "😤": "Stressed",
-        }
         allowed_emojis = {"😊", "😐", "😰", "😢", "😤"}
 
-        normalized_mood = (mood or "").strip()
-        normalized_mood = mood_label_to_emoji.get(normalized_mood.lower(), normalized_mood)
+        raw_mood = (mood or "").strip()
+        lower_mood = raw_mood.lower()
+
+        if lower_mood in mood_label_to_emoji:
+            normalized_mood = mood_label_to_emoji[lower_mood]
+            saved_label = raw_mood.title()
+        else:
+            normalized_mood = raw_mood
+            saved_label = _resolve_mood_label(normalized_mood)
+
         if normalized_mood not in allowed_emojis:
             return False, "Invalid mood value"
+
+        stored_note = _compose_mood_note(saved_label, note)
 
         _execute(
             cur,
             """
-            SELECT id, mood FROM mood_logs
+            SELECT id, mood, note FROM mood_logs
             WHERE student_id = ? AND date(created_at) = date('now')
             LIMIT 1
             """,
@@ -512,7 +580,7 @@ def record_mood(student_id: int, mood: str, note: Optional[str] = None) -> Tuple
         )
         existing = _row_to_dict(cur.fetchone())
         if existing:
-            existing_label = emoji_to_label.get(existing["mood"], "today")
+            existing_label = _resolve_mood_label(existing.get("mood"), existing.get("note"))
             return False, f"You already logged your mood today ({existing_label}). Try again tomorrow!"
 
         _execute(
@@ -521,10 +589,9 @@ def record_mood(student_id: int, mood: str, note: Optional[str] = None) -> Tuple
             INSERT INTO mood_logs (student_id, mood, note, created_at)
             VALUES (?, ?, ?, ?)
             """,
-            (student_id, normalized_mood, note, get_ist_timestamp()),
+            (student_id, normalized_mood, stored_note, get_ist_timestamp()),
         )
         conn.commit()
-        saved_label = (mood or "").strip().title() or emoji_to_label.get(normalized_mood, "Mood")
         return True, f"Mood logged successfully! Your check-in: {saved_label}"
     except Exception as e:
         logger.error(f"Error recording mood: {e}")
@@ -546,7 +613,10 @@ def get_mood_history(student_id: int, days: int = 7) -> List[Dict]:
             """,
             (student_id,),
         )
-        return _rows_to_dicts(cur.fetchall())
+        rows = _rows_to_dicts(cur.fetchall())
+        for row in rows:
+            row["mood_label"] = _resolve_mood_label(row.get("mood"), row.get("note"))
+        return rows
     finally:
         conn.close()
 
@@ -639,6 +709,44 @@ def get_student_dashboard_stats(student_id: int) -> Dict:
         )
         mood_dist = {row["mood"]: row["count"] for row in _rows_to_dicts(cur.fetchall())}
 
+        _execute(
+            cur,
+            """
+            SELECT DISTINCT date(created_at) AS log_date
+            FROM mood_logs
+            WHERE student_id = ?
+            ORDER BY log_date DESC
+            """,
+            (student_id,),
+        )
+        date_rows = _rows_to_dicts(cur.fetchall())
+
+        logged_dates = set()
+        for row in date_rows:
+            raw = row.get("log_date")
+            if raw is None:
+                continue
+            if hasattr(raw, "year") and hasattr(raw, "month") and hasattr(raw, "day"):
+                logged_dates.add(raw)
+                continue
+            try:
+                logged_dates.add(datetime.fromisoformat(str(raw)).date())
+            except Exception:
+                continue
+
+        today = datetime.now(IST).date()
+        start = None
+        if today in logged_dates:
+            start = today
+        elif (today - timedelta(days=1)) in logged_dates:
+            start = today - timedelta(days=1)
+
+        current_streak = 0
+        cursor_day = start
+        while cursor_day is not None and cursor_day in logged_dates:
+            current_streak += 1
+            cursor_day = cursor_day - timedelta(days=1)
+
         return {
             "quick_assessments": int(quick_count),
             "full_assessments": int(full_count),
@@ -646,6 +754,7 @@ def get_student_dashboard_stats(student_id: int) -> Dict:
             "latest_full": latest_full,
             "avg_score_30days": avg_30day.get("avg_score") if avg_30day else None,
             "mood_distribution": mood_dist,
+            "current_streak": int(current_streak),
         }
     finally:
         conn.close()

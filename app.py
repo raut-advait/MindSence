@@ -224,19 +224,60 @@ def _load_lifestyle_components():
         return None, None, None
 
 
+def _load_quick_components():
+    """Load quick-check-in model artifacts trained on the 5 daily inputs."""
+    try:
+        pre = joblib.load('models/quick_preprocessor.pkl')
+        clf = joblib.load('models/quick_model.pkl')
+        with open('models/quick_metadata.json', 'r', encoding='utf-8') as fh:
+            meta = json.load(fh)
+        with open('models/quick_features.json', 'r', encoding='utf-8') as fh:
+            feat_meta = json.load(fh)
+        meta = {**meta, **feat_meta}
+        return pre, clf, meta
+    except Exception as exc:
+        logger.warning("Quick model artifacts unavailable: %s", exc)
+        return None, None, None
+
+
+def _load_severity_components():
+    """Load multiclass severity model artifacts for shadow inference."""
+    try:
+        pre = joblib.load('models/severity_preprocessor.pkl')
+        clf = joblib.load('models/severity_model.pkl')
+        with open('models/severity_metadata.json', 'r', encoding='utf-8') as fh:
+            meta = json.load(fh)
+        with open('models/severity_features.json', 'r', encoding='utf-8') as fh:
+            feat_meta = json.load(fh)
+        meta = {**meta, **feat_meta}
+        return pre, clf, meta
+    except Exception as exc:
+        logger.warning("Severity model artifacts unavailable: %s", exc)
+        return None, None, None
+
+
 # Loaded once at startup
 _ml_model, _ml_scaler, _ml_feature_names = _load_ml_components()
 if _ml_model is not None:
     logger.info("ML model loaded — final_model.pkl (binary v5.0)")
 else:
-    logger.info("Legacy binary model disabled — using lifestyle model pipeline")
+    logger.info("Legacy binary model disabled — using severity/quick model pipeline")
 
-# lifestyle model globals
-_lifestyle_pre, _lifestyle_model, _lifestyle_meta = _load_lifestyle_components()
-if _lifestyle_model is not None:
-    logger.info("Lifestyle model loaded — trained_model.pkl")
+# lifestyle model is no longer used in prediction flow (severity+quick only)
+_lifestyle_pre, _lifestyle_model, _lifestyle_meta = None, None, None
+logger.info("Lifestyle model inference path disabled — using severity/quick models")
+
+_quick_pre, _quick_model, _quick_meta = _load_quick_components()
+if _quick_model is not None:
+    logger.info("Quick model loaded — quick_model.pkl")
 else:
-    logger.warning("Lifestyle model unavailable — lifestyle predictions disabled")
+    logger.warning("Quick model unavailable — quick predictions disabled")
+
+_severity_pre, _severity_model, _severity_meta = _load_severity_components()
+if _severity_model is not None:
+    logger.info("Severity model loaded — severity_model.pkl (shadow)")
+else:
+    logger.warning("Severity model unavailable — shadow severity predictions disabled")
 
 
 # ─────────────────────────────────────────────
@@ -246,72 +287,259 @@ else:
 
 
 
-def predict_ml(stress, anxiety, sleep, focus, social, sadness, energy, overwhelm):
+def _probability_to_category(probability: float, threshold: float = None) -> str:
+    p = max(0.0, min(1.0, float(probability)))
+
+    # Fallback to fixed bands if threshold is unavailable.
+    if threshold is None:
+        if p < 0.25:
+            return "Excellent Mental Well-being"
+        if p < 0.50:
+            return "Moderate Stress Detected"
+        if p < 0.75:
+            return "High Stress & Anxiety"
+        return "Severe Distress Detected"
+
+    t = max(0.05, min(0.95, float(threshold)))
+    low_band = max(0.0, min(1.0, 0.5 * t))
+    high_band = max(t, min(1.0, 1.5 * t))
+
+    if p < low_band:
+        return "Excellent Mental Well-being"
+    if p < t:
+        return "Moderate Stress Detected"
+    if p < high_band:
+        return "High Stress & Anxiety"
+    return "Severe Distress Detected"
+
+
+def _probability_to_category_quick(probability: float, threshold: float) -> str:
+    """Map quick-model probability to 4-level category with wider middle bands.
+
+    Quick model thresholds are often low after calibration (for binary screening).
+    Using full-mode bands can overproduce "Excellent". This mapping keeps
+    categories responsive for daily check-ins.
     """
-    Mental health risk scorer — rule-based primary, ML model referenced.
+    p = max(0.0, min(1.0, float(probability)))
+    t = max(0.05, min(0.95, float(threshold)))
 
-    PRIMARY: Weighted rule-based scorer across all 8 quiz dimensions.
-    The trained ML model (final_model.pkl, v5.0-binary) is loaded and its
-    P(High Risk) is computed for logging/documentation, but it does NOT
-    drive the UI result because the model outputs near-constant ~0.23 for
-    all inputs (ROC-AUC = 0.517, below useful discrimination threshold).
+    low_band = max(0.0, min(1.0, 0.25 * t))
+    high_band = max(t, min(1.0, 2.0 * t))
 
-    Rule-based weights:
-        Risk dimensions   (stress, anxiety, sadness, overwhelm)  → weight 1.5
-        Protective dims   (sleep, focus, social, energy)         → weight 1.0
-        Both on 1–5 quiz scale; protective dimensions inverted.
+    if p < low_band:
+        return "Excellent Mental Well-being"
+    if p < t:
+        return "Moderate Stress Detected"
+    if p < high_band:
+        return "High Stress & Anxiety"
+    return "Severe Distress Detected"
 
-    UI probability → category (locked architecture):
-        0.00–0.25  → Excellent Mental Well-being
-        0.25–0.50  → Moderate Stress Detected
-        0.50–0.75  → High Stress & Anxiety
-        0.75–1.00  → Severe Distress Detected
 
-    Returns:
-        (probability: float 0–1, category: str)
-    """
-    # ── Rule-based primary scorer ─────────────────────────────────────────────
-    s   = float(stress);  a   = float(anxiety)
-    sl  = float(sleep);   fo  = float(focus)
-    so  = float(social);  sad = float(sadness)
-    en  = float(energy);  ov  = float(overwhelm)
+def _probability_to_score(probability: float) -> int:
+    p = max(0.0, min(1.0, float(probability)))
+    return int(round(p * 40.0))
 
-    rw, pw = 1.5, 1.0
-    raw   = rw*s + rw*a + rw*sad + rw*ov + pw*(6-sl) + pw*(6-fo) + pw*(6-so) + pw*(6-en)
-    min_r = 4 * rw * 1 + 4 * pw * 1   # best case  = 10.0
-    max_r = 4 * rw * 5 + 4 * pw * 5   # worst case = 50.0
-    probability = max(0.0, min(1.0, (raw - min_r) / (max_r - min_r)))
 
-    if probability < 0.25:      category = "Excellent Mental Well-being"
-    elif probability < 0.50:    category = "Moderate Stress Detected"
-    elif probability < 0.75:    category = "High Stress & Anxiety"
-    else:                       category = "Severe Distress Detected"
+def _probability_to_score_quick(probability: float, threshold: float) -> int:
+    """Convert quick-model probability into a 0-40 score aligned with quick bands."""
+    p = max(0.0, min(1.0, float(probability)))
+    t = max(0.05, min(0.95, float(threshold)))
+    low_band = max(0.0, min(1.0, 0.25 * t))
+    high_band = max(t, min(1.0, 2.0 * t))
 
-    # ── ML model — informational only (log P(High Risk) for documentation) ────
-    if _ml_model is not None and _ml_scaler is not None:
+    eps = 1e-9
+    if p < low_band:
+        # Excellent: 0-9
+        ratio = p / max(low_band, eps)
+        return int(round(ratio * 9.0))
+    if p < t:
+        # Moderate: 10-19
+        ratio = (p - low_band) / max(t - low_band, eps)
+        return int(round(10.0 + ratio * 9.0))
+    if p < high_band:
+        # High: 20-29
+        ratio = (p - t) / max(high_band - t, eps)
+        return int(round(20.0 + ratio * 9.0))
+
+    # Severe: 30-40
+    ratio = (p - high_band) / max(1.0 - high_band, eps)
+    ratio = max(0.0, min(1.0, ratio))
+    return int(round(30.0 + ratio * 10.0))
+
+
+def _to_float(value, default):
+    try:
+        if value is None or value == '':
+            return float(default)
+        return float(value)
+    except Exception:
+        return float(default)
+
+
+def _map_binary_value(value, default=0.0):
+    if value is None:
+        return float(default)
+    txt = str(value).strip().lower()
+    if txt in {'1', 'yes', 'true'}:
+        return 1.0
+    if txt in {'0', 'no', 'false'}:
+        return 0.0
+    return _to_float(value, default)
+
+
+def _map_counseling_value(value, default=0.0):
+    if value is None:
+        return float(default)
+    txt = str(value).strip().lower()
+    if txt == 'never':
+        return 0.0
+    if txt == 'occasionally':
+        return 1.0
+    if txt == 'frequently':
+        return 2.0
+    return _to_float(value, default)
+
+
+def _mean_or_default(rows, key, default):
+    vals = []
+    for row in rows or []:
         try:
-            activity_val = (float(focus) + float(energy)) / 2.0
-            feature_values = {
-                'stress':           s,
-                'anxiety':          a,
-                'sleep':            sl,
-                'activity':         activity_val,
-                'social':           so,
-                'financial_stress': 2.5,
-                'counseling':       0.0,
-                'family_history':   0.0,
-                'chronic_illness':  0.0,
-            }
-            # Pass DataFrame — scaler was fitted on DataFrame in train_model.py
-            X_df = pd.DataFrame([feature_values], columns=_ml_feature_names)
-            X_scaled = _ml_scaler.transform(X_df)
-            ml_prob = float(_ml_model.predict_proba(X_scaled)[0][1])
-            logger.info("ML P(High Risk)=%.4f | Rule-based risk=%.4f | Result: %s",
-                        ml_prob, probability, category)
-        except Exception as exc:
-            logger.debug("ML informational query failed: %s", exc)
+            val = row.get(key)
+            if val is None:
+                continue
+            vals.append(float(val))
+        except Exception:
+            continue
+    if not vals:
+        return float(default)
+    return float(np.mean(vals))
 
-    return probability, category
+
+def _build_severity_shadow_payload(profile, student_id):
+    """Build canonical severity payload using form, profile, and history fallbacks."""
+    recent_full = []
+    if student_id:
+        try:
+            recent_full = get_full_assessments(student_id, limit=10)
+        except Exception:
+            recent_full = []
+
+    recent_mood = []
+    if student_id:
+        try:
+            recent_mood = get_mood_history(student_id, days=7)
+        except Exception:
+            recent_mood = []
+
+    mood_to_stress = {
+        '😊': 1.5,
+        '😐': 2.5,
+        '😤': 3.5,
+        '😰': 4.5,
+        '😢': 4.0,
+    }
+    mood_stress_proxy = np.mean([mood_to_stress.get((m.get('mood') or '').strip(), 3.0) for m in recent_mood]) if recent_mood else 3.0
+
+    sleep_default = _mean_or_default(recent_full, 'sleep_duration', 7.0)
+    study_default = _mean_or_default(recent_full, 'study_hours', 3.0)
+    social_default = _mean_or_default(recent_full, 'social_media', 2.0)
+    activity_default = _mean_or_default(recent_full, 'physical_activity', 1.5)
+    stress_default = _mean_or_default(recent_full, 'stress_level', mood_stress_proxy)
+    anxiety_default = _mean_or_default(recent_full, 'anxiety', 3.0)
+    support_default = _mean_or_default(recent_full, 'social_support', 3.0)
+
+    payload = {
+        'Age': _to_float(profile.get('age'), 21.0),
+        'CGPA': _to_float(profile.get('cgpa'), 3.0),
+        'Sleep_Duration': _to_float(request.form.get('Sleep_Duration'), sleep_default),
+        'Study_Hours': _to_float(request.form.get('Study_Hours'), study_default),
+        'Social_Media': _to_float(request.form.get('Social_Media'), social_default),
+        'Physical_Activity': _to_float(request.form.get('Physical_Activity'), activity_default),
+        'Stress_Level': _to_float(request.form.get('Stress_Level'), stress_default),
+        'Anxiety_Score': _to_float(request.form.get('Anxiety_Score') or request.form.get('Anxiety_Level'), anxiety_default),
+        'Social_Support': _to_float(request.form.get('Social_Support'), support_default),
+        'Financial_Stress': _to_float(request.form.get('Financial_Stress'), 3.0),
+        'Sleep_Quality': _to_float(request.form.get('Sleep_Quality'), 3.0),
+        'Diet_Quality': _to_float(request.form.get('Diet_Quality'), 3.0),
+        'Counseling_Service_Use': _map_counseling_value(request.form.get('Counseling_Service_Use'), 0.0),
+        'Family_History': _map_binary_value(request.form.get('Family_History'), 0.0),
+        'Gender': str(profile.get('gender') or request.form.get('Gender') or 'Other'),
+        'Department': str(profile.get('department') or request.form.get('Department') or 'General'),
+        'Residence_Type': str(request.form.get('Residence_Type') or 'Unknown'),
+        'Relationship_Status': str(request.form.get('Relationship_Status') or 'Unknown'),
+        'Substance_Use': str(request.form.get('Substance_Use') or 'Unknown'),
+        'Chronic_Illness': str(request.form.get('Chronic_Illness') or 'Unknown'),
+        'source_dataset': 'app_submission',
+    }
+
+    # Keep values inside training-time bounds.
+    payload['Age'] = max(16.0, min(40.0, payload['Age']))
+    payload['CGPA'] = max(0.0, min(10.0, payload['CGPA']))
+    payload['Sleep_Duration'] = max(2.0, min(12.0, payload['Sleep_Duration']))
+    payload['Study_Hours'] = max(0.0, min(12.0, payload['Study_Hours']))
+    payload['Social_Media'] = max(0.0, min(12.0, payload['Social_Media']))
+    payload['Physical_Activity'] = max(0.0, min(6.0, payload['Physical_Activity']))
+    payload['Stress_Level'] = max(0.0, min(5.0, payload['Stress_Level']))
+    payload['Anxiety_Score'] = max(0.0, min(5.0, payload['Anxiety_Score']))
+    payload['Social_Support'] = max(0.0, min(5.0, payload['Social_Support']))
+    payload['Financial_Stress'] = max(0.0, min(5.0, payload['Financial_Stress']))
+    payload['Sleep_Quality'] = max(0.0, min(5.0, payload['Sleep_Quality']))
+    payload['Diet_Quality'] = max(0.0, min(5.0, payload['Diet_Quality']))
+    payload['Counseling_Service_Use'] = max(0.0, min(2.0, payload['Counseling_Service_Use']))
+    payload['Family_History'] = max(0.0, min(1.0, payload['Family_History']))
+    return payload
+
+
+def _run_shadow_severity_prediction(profile, student_id, current_result, mode):
+    if _severity_model is None or _severity_pre is None:
+        return None
+
+    try:
+        features = []
+        features.extend(_severity_meta.get('numeric_features', []))
+        features.extend(_severity_meta.get('categorical_features', []))
+        if not features:
+            return None
+
+        payload = _build_severity_shadow_payload(profile, student_id)
+        row = {}
+        for feature in features:
+            if feature in ('Gender', 'Department', 'Residence_Type', 'Relationship_Status', 'Substance_Use', 'Chronic_Illness', 'source_dataset'):
+                row[feature] = str(payload.get(feature, 'Unknown'))
+            else:
+                row[feature] = float(payload.get(feature, 0.0))
+
+        X_shadow = pd.DataFrame([row], columns=features)
+        X_shadow_t = _severity_pre.transform(X_shadow)
+        pred_idx = int(_severity_model.predict(X_shadow_t)[0])
+        proba = _severity_model.predict_proba(X_shadow_t)[0]
+        pred_conf = float(np.max(proba))
+        risk_prob = float(proba[2] + proba[3])
+
+        idx_to_label = {
+            0: 'Excellent Mental Well-being',
+            1: 'Moderate Stress Detected',
+            2: 'High Stress & Anxiety',
+            3: 'Severe Distress Detected',
+        }
+        pred_label = idx_to_label.get(pred_idx, 'Moderate Stress Detected')
+        logger.info(
+            'Severity shadow | mode=%s user=%s current="%s" shadow="%s" conf=%.4f',
+            mode,
+            student_id,
+            current_result,
+            pred_label,
+            pred_conf,
+        )
+        return {
+            'severity_shadow_label': pred_label,
+            'severity_shadow_confidence': pred_conf,
+            'severity_shadow_risk_probability': risk_prob,
+            'severity_shadow_class': pred_idx,
+        }
+    except Exception as exc:
+        logger.warning('Severity shadow prediction failed: %s', exc)
+        return None
 
 
 
@@ -600,7 +828,8 @@ def student_dashboard():
         last_category=last_category,
         quick_count=stats['quick_assessments'],
         full_count=stats['full_assessments'],
-        avg_30day_score=stats['avg_score_30days']
+        avg_30day_score=stats['avg_score_30days'],
+        current_streak=stats.get('current_streak', 0)
     )
 
 
@@ -616,17 +845,39 @@ def test():
 # ── PREDICT / ANALYZE ─────────────────────────
 @app.route('/predict', methods=['POST'])
 def predict():
-    global _lifestyle_pre, _lifestyle_model, _lifestyle_meta
+    global _lifestyle_pre, _lifestyle_model, _lifestyle_meta, _quick_pre, _quick_model, _quick_meta, _severity_pre, _severity_model, _severity_meta
 
     if 'user' not in session:
         return redirect('/login')
 
     assessment_mode = (request.form.get('mode', 'quick') or 'quick').strip().lower()
+    full_field_markers = [
+        'Anxiety_Score',
+        'Social_Support',
+        'Financial_Stress',
+        'Sleep_Quality',
+        'Diet_Quality',
+        'Counseling_Service_Use',
+        'Family_History',
+    ]
+    if assessment_mode != 'full':
+        if any((request.form.get(field) or '').strip() for field in full_field_markers):
+            assessment_mode = 'full'
 
-    if _lifestyle_model is None:
-        _lifestyle_pre, _lifestyle_model, _lifestyle_meta = _load_lifestyle_components()
-        if _lifestyle_model is None:
-            logger.warning("Lifestyle model not available at request time; using rule-based fallback")
+    if _quick_model is None:
+        _quick_pre, _quick_model, _quick_meta = _load_quick_components()
+    if _severity_model is None:
+        _severity_pre, _severity_model, _severity_meta = _load_severity_components()
+
+    severity_shadow_enabled = (os.environ.get('SEVERITY_SHADOW_MODE', '1').strip().lower() not in {'0', 'false', 'no'})
+
+    if assessment_mode == 'full' and (_severity_model is None or _severity_pre is None):
+        flash('Full assessment model is unavailable. Please contact admin or redeploy model artifacts.', 'error')
+        return redirect('/test?mode=full')
+
+    if assessment_mode == 'quick' and _quick_model is None:
+        flash('Quick assessment model is unavailable. Please contact admin or redeploy model artifacts.', 'error')
+        return redirect('/test?mode=quick')
 
     # load basic profile info (for academic tips)
     profile = {}
@@ -664,94 +915,20 @@ def predict():
             return 4
         return 5
 
-    def _scores_from_lifestyle_form(form):
-        stress = _clamp_1_5(form.get('Stress_Level', 3), 3)
-        anxiety = _clamp_1_5(form.get('Anxiety_Level', stress), stress)
-        sleep_quality = _sleep_hours_to_quality(form.get('Sleep_Duration', 7))
-        focus = _clamp_1_5(form.get('Focus_Level', 3), 3)
-        social = _clamp_1_5(form.get('Social_Support', 3), 3)
-
-        sadness_default = max(1, min(5, round((stress + anxiety) / 2)))
-        sadness = _clamp_1_5(form.get('Sadness_Level', sadness_default), sadness_default)
-
-        energy_default = 3
-        try:
-            activity_hours = float(form.get('Physical_Activity', 1.5))
-            if activity_hours <= 0.5:
-                energy_default = 2
-            elif activity_hours <= 1.5:
-                energy_default = 3
-            elif activity_hours <= 2.5:
-                energy_default = 4
-            else:
-                energy_default = 5
-        except Exception:
-            pass
-        energy = _clamp_1_5(form.get('Energy_Level', energy_default), energy_default)
-
-        overwhelm_default = max(1, min(5, round((stress + anxiety + sadness) / 3)))
-        overwhelm = _clamp_1_5(form.get('Overwhelm_Level', overwhelm_default), overwhelm_default)
-
-        return {
-            'stress': stress,
-            'anxiety': anxiety,
-            'sleep': sleep_quality,
-            'focus': focus,
-            'social': social,
-            'sadness': sadness,
-            'energy': energy,
-            'overwhelm': overwhelm,
-        }
-
-    # Helper function to aggregate scores for a category
-    def get_category_score(field_name, request_form):
-        """Get score for a category, averaging multiple questions if they exist"""
-        values = []
-        
-        # Try single field first (quick mode)
-        single_val = request_form.get(field_name)
-        if single_val:
-            try:
-                values.append(int(single_val))
-            except (ValueError, TypeError):
-                pass
-        
-        # Try numbered fields (full mode): field_1, field_2, etc.
-        counter = 1
-        while True:
-            multi_val = request_form.get(f"{field_name}_{counter}")
-            if not multi_val:
-                break
-            try:
-                values.append(int(multi_val))
-            except (ValueError, TypeError):
-                pass
-            counter += 1
-        
-        # If we have values, average them
-        if values:
-            avg = sum(values) / len(values)
-            return max(1, min(5, round(avg)))  # clamp to 1-5
-        
-        # Default fallback
-        return 3
-
-    # lifestyle model branch: run only for explicit FULL mode submissions
-    if _lifestyle_model is not None and assessment_mode == 'full' and 'Sleep_Duration' in request.form:
-        # build record from form & optional profile
-        feats = []
-        feats.extend(_lifestyle_meta.get('numeric_features', []))
-        feats.extend(_lifestyle_meta.get('categorical_features', []))
+    # Full assessment branch: primary output from severity model.
+    if assessment_mode == 'full':
+        # Build record directly from submitted form values.
         rec = {}
-        for feat in feats:
-            val = request.form.get(feat)
+        for feat, val in request.form.items():
+            if feat == 'mode':
+                continue
             if val is None:
                 rec[feat] = np.nan
-            else:
-                try:
-                    rec[feat] = float(val)
-                except ValueError:
-                    rec[feat] = val
+                continue
+            try:
+                rec[feat] = float(val)
+            except ValueError:
+                rec[feat] = val
         # pull stored profile values if missing
         user_id = session.get('user_id')
         if user_id:
@@ -789,7 +966,7 @@ def predict():
         activity = _safe_float('Physical_Activity', 1)
 
         # additional full-survey fields (1-5 scales)
-        anxiety = _safe_float('Anxiety_Level', 3)
+        anxiety = _safe_float('Anxiety_Score', _safe_float('Anxiety_Level', 3))
         focus = _safe_float('Focus_Level', 3)
         social_conn = _safe_float('Social_Support', 3)
         sadness = _safe_float('Sadness_Level', 3)
@@ -839,89 +1016,40 @@ def predict():
         rec['study_x_stress'] = study_val * stress_model_val
         rec['cgpa_x_stress'] = cgpa_val * stress_model_val
 
-        # Ensure model feature order matches training
-        model_features = []
-        model_features.extend(_lifestyle_meta.get('numeric_features', []))
-        model_features.extend(_lifestyle_meta.get('categorical_features', []))
+        shadow_payload = _run_shadow_severity_prediction(
+            profile=profile,
+            student_id=session.get('user_id'),
+            current_result='Moderate Stress Detected',
+            mode='full',
+        )
+        if not shadow_payload:
+            flash("Full assessment model is currently unavailable. Please try again shortly.", "error")
+            return redirect('/test?mode=full')
 
-        try:
-            model_row = {}
-            for feat in model_features:
-                if feat in ('Gender', 'Department'):
-                    model_row[feat] = str(rec.get(feat, 'Unknown'))
-                else:
-                    model_row[feat] = float(rec.get(feat, 0.0))
+        shadow_label_raw = str(shadow_payload.get('severity_shadow_label') or 'Moderate Stress Detected')
+        prob = float(shadow_payload.get('severity_shadow_risk_probability', shadow_payload.get('severity_shadow_confidence', 0.5)))
+        threshold = None
+        total_score = _probability_to_score(prob)
+        ml_category = _probability_to_category(prob, threshold=None)
+        band = None
+        if ml_category == "Excellent Mental Well-being":
+            band = "Excellent"
+        elif ml_category == "Moderate Stress Detected":
+            band = "Moderate"
+        elif ml_category == "High Stress & Anxiety":
+            band = "High"
+        else:
+            band = "Severe"
 
-            X_row = pd.DataFrame([model_row], columns=model_features)
-            prob = float(_lifestyle_model.predict_proba(X_row)[0][1])
-            threshold = float(_lifestyle_meta.get('selected_threshold', 0.5))
-            threshold = min(max(threshold, 0.05), 0.50)
-
-            # Build a questionnaire-driven risk score (0-40) so full-mode feedback
-            # remains sensitive to user-selected values, then blend with ML score.
-            sleep_quality = _sleep_hours_to_quality(sleep)
-            q_stress = max(1, min(5, round(stress_val)))
-            q_anxiety = max(1, min(5, round(anxiety)))
-            q_focus = max(1, min(5, round(focus)))
-            q_social = max(1, min(5, round(social_conn)))
-            q_sadness = max(1, min(5, round(sadness)))
-            q_energy = max(1, min(5, round(energy)))
-            q_overwhelm = max(1, min(5, round(overwhelm)))
-
-            questionnaire_components = {
-                'stress': q_stress,
-                'anxiety': q_anxiety,
-                'sleep': 6 - sleep_quality,
-                'focus': 6 - q_focus,
-                'social': 6 - q_social,
-                'sadness': q_sadness,
-                'energy': 6 - q_energy,
-                'overwhelm': q_overwhelm,
-            }
-            questionnaire_score = int(sum(questionnaire_components.values()))
-            model_score = int(round(prob * 40.0))
-
-            # Hybrid score: prioritize questionnaire signal while retaining ML influence.
-            total_score = int(round(0.70 * questionnaire_score + 0.30 * model_score))
-            total_score = min(max(total_score, 0), 40)
-
-            # Category from blended risk score (same 4-band architecture).
-            if total_score <= 10:
-                ml_category = "Excellent Mental Well-being"
-                band = "Excellent"
-            elif total_score <= 20:
-                ml_category = "Moderate Stress Detected"
-                band = "Moderate"
-            elif total_score <= 30:
-                ml_category = "High Stress & Anxiety"
-                band = "High"
-            else:
-                ml_category = "Severe Distress Detected"
-                band = "Severe"
-
-            analysis = analyze_score_by_category(ml_category)
-            logger.info(
-                "Lifestyle model prediction | mode=%s | P(Depression)=%.4f | threshold=%.3f | q_score=%d | ml_score=%d | final_score=%d | band=%s",
-                mode, prob, threshold, questionnaire_score, model_score, total_score, band
-            )
-        except Exception as exc:
-            logger.error("Lifestyle model prediction failed, falling back to rule-based scoring: %s", exc)
-            fallback_scores = _scores_from_lifestyle_form(request.form)
-            risk_scores = {
-                'stress':    fallback_scores['stress'],
-                'anxiety':   fallback_scores['anxiety'],
-                'sleep':     6 - fallback_scores['sleep'],
-                'focus':     6 - fallback_scores['focus'],
-                'social':    6 - fallback_scores['social'],
-                'sadness':   fallback_scores['sadness'],
-                'energy':    6 - fallback_scores['energy'],
-                'overwhelm': fallback_scores['overwhelm'],
-            }
-            total_score = int(sum(risk_scores.values()))
-            analysis = analyze_score(total_score)
-            prob = None
-            threshold = None
-            band = None
+        analysis = analyze_score_by_category(ml_category)
+        logger.info(
+            "Severity primary output | mode=%s | risk_prob=%.4f | final_label=%s | shadow_label=%s | final_score=%d",
+            mode,
+            prob,
+            ml_category,
+            shadow_label_raw,
+            total_score,
+        )
         # supplement analysis with profile/activity specific tips
         extra_tips = []
         if profile.get('cgpa') is not None:
@@ -945,9 +1073,6 @@ def predict():
                     "text": "Try to get at least 30 minutes of moderate exercise a few times this week to boost mood."})
         except Exception:
             pass
-        if extra_tips:
-            analysis['tips'].extend(extra_tips)
-
         is_ml_prediction = False
         display_score = total_score    # show the calculated score on the gauge
         # prob/threshold/band are set above by the model branch
@@ -987,8 +1112,38 @@ def predict():
             'overwhelm': _clamp_1_5((stress_val + anxiety + sadness) / 3.0),
         }
 
-        # save simplified result to database
-        # Save as full assessment with ML features
+        display_score = total_score
+
+        if extra_tips:
+            analysis['tips'].extend(extra_tips)
+
+        # Final canonicalization: keep full-mode label, score, and probability
+        # derived from the same severity risk value right before rendering.
+        try:
+            if assessment_mode == 'full' and shadow_payload:
+                final_prob = float(
+                    shadow_payload.get(
+                        'severity_shadow_risk_probability',
+                        shadow_payload.get('severity_shadow_confidence', prob),
+                    )
+                )
+                final_category = _probability_to_category(final_prob, threshold=None)
+                analysis = analyze_score_by_category(final_category)
+                total_score = _probability_to_score(final_prob)
+                display_score = total_score
+                prob = final_prob
+                if final_category == "Excellent Mental Well-being":
+                    band = "Excellent"
+                elif final_category == "Moderate Stress Detected":
+                    band = "Moderate"
+                elif final_category == "High Stress & Anxiety":
+                    band = "High"
+                else:
+                    band = "Severe"
+        except Exception as exc:
+            logger.warning("Final full-mode canonicalization failed: %s", exc)
+
+        # Save as full assessment with ML features + canonical questionnaire fields.
         try:
             ml_features = {
                 'stress_level': float(stress_val),
@@ -996,6 +1151,17 @@ def predict():
                 'study_hours': float(study),
                 'physical_activity': float(activity),
                 'social_media': float(social_media_val) if social_media_val else 2.0
+            }
+            canonical_fields = {
+                'sleep_quality': _to_float(request.form.get('Sleep_Quality'), 3.0),
+                'diet_quality': _to_float(request.form.get('Diet_Quality'), 3.0),
+                'financial_stress': _to_float(request.form.get('Financial_Stress'), 3.0),
+                'counseling_service_use': str(request.form.get('Counseling_Service_Use') or 'Never'),
+                'family_history': str(request.form.get('Family_History') or 'No'),
+                'residence_type': str(request.form.get('Residence_Type') or 'Unknown'),
+                'relationship_status': str(request.form.get('Relationship_Status') or 'Unknown'),
+                'substance_use': str(request.form.get('Substance_Use') or 'Never'),
+                'chronic_illness': str(request.form.get('Chronic_Illness') or 'Unknown'),
             }
             score_dims = {
                 'anxiety': max(1, min(5, round(float(anxiety)))),
@@ -1012,7 +1178,9 @@ def predict():
                 total_score=total_score,
                 result_category=analysis['result'],
                 ml_probability=prob,
-                ml_threshold=threshold
+                ml_threshold=threshold,
+                canonical_fields=canonical_fields,
+                shadow_payload=shadow_payload,
             )
         except Exception as e:
             logger.error(f"Full assessment save failed: {e}")
@@ -1029,114 +1197,139 @@ def predict():
                        score=display_score,
                        is_ml_prediction=is_ml_prediction,
                        ml_probability=prob,
+                       display_probability=prob,
+                       display_probability_label='Severity Risk Probability',
                        ml_threshold=threshold,
                        ml_band=band,
+                       severity_shadow=shadow_payload,
+                       assessment_mode=assessment_mode,
                        profile=profile)
         # if lifestyle model not loaded fall through to normal path
 
-    # Collect all 8 scores
-    fields = ['stress', 'anxiety', 'sleep', 'focus', 'social', 'sadness', 'energy', 'overwhelm']
-    scores = {}
-
-    if 'Sleep_Duration' in request.form:
-        scores = _scores_from_lifestyle_form(request.form)
-    else:
-        for f in fields:
-            scores[f] = get_category_score(f, request.form)
-    
-    # If quick mode (missing sadness, energy, overwhelm), estimate them intelligently
-    test_mode = assessment_mode
-    if test_mode == 'quick':
-        # Estimate missing fields based on user's actual answers
-        # sadness ~ correlated with stress/anxiety
-        if scores.get('sadness', 0) == 3:  # Default value
-            scores['sadness'] = int((scores['stress'] + scores['anxiety']) / 2)
-        
-        # energy ~ inverse of focus difficulty (hard to focus = low energy)
-        if scores.get('energy', 0) == 3:  # Default value
-            scores['energy'] = max(1, 6 - scores['focus'])  # Invert: 5→1, 1→5
-        
-        # overwhelm ~ similar to stress
-        if scores.get('overwhelm', 0) == 3:  # Default value
-            scores['overwhelm'] = scores['stress']
-
-    # Try ML model first
-    ml_prob, ml_category = predict_ml(
-        scores['stress'], scores['anxiety'], scores['sleep'], scores['focus'],
-        scores['social'], scores['sadness'], scores['energy'], scores['overwhelm']
+    # Quick mode: strict ML-only inference using the dedicated quick model.
+    quick_features = _quick_meta.get(
+        'quick_features',
+        [
+            'Sleep_Duration',
+            'Study_Hours',
+            'Social_Media',
+            'Physical_Activity',
+            'Stress_Level',
+            'Age',
+            'CGPA',
+            'Gender',
+            'Department',
+            'sleep_study_ratio',
+            'stress_x_sleep',
+            'study_x_stress',
+            'activity_social_balance',
+        ],
     )
-    
-    # Use ML model if available, otherwise fall back to rule-based
-    if ml_category:
-        analysis = analyze_score_by_category(ml_category)
-        is_ml_prediction = True
-        # Convert probability to 0-40 score scale for display
-        total_score = int(ml_prob * 40)
-    else:
-        # Rule-based calculation from the 8 quiz dimensions
-        # Risk factors (lower is better):
-        # - stress (1-5): 1=low, 5=high stress
-        # - anxiety (1-5): 1=low, 5=high anxiety  
-        # - sleep (1-5): 1=poor, 5=good sleep (needs inversion)
-        # - focus (1-5): 1=poor, 5=good focus (needs inversion)
-        # - social (1-5): 1=isolated, 5=well-connected (needs inversion)
-        # - sadness (1-5): 1=happy, 5=very sad
-        # - energy (1-5): 1=very low, 5=high energy (needs inversion)
-        # - overwhelm (1-5): 1=calm, 5=very overwhelmed
-        
-        # Convert 1-5 scales to risk factors by inverting positive dimensions
-        risk_scores = {
-            'stress':    scores['stress'],           # high value = high risk
-            'anxiety':   scores['anxiety'],          # high value = high risk
-            'sleep':     6 - scores['sleep'],        # low sleep = high risk
-            'focus':     6 - scores['focus'],        # low focus = high risk
-            'social':    6 - scores['social'],       # isolation = high risk
-            'sadness':   scores['sadness'],          # high value = high risk
-            'energy':    6 - scores['energy'],       # low energy = high risk
-            'overwhelm': scores['overwhelm'],        # high value = high risk
-        }
-        total_score = sum(risk_scores.values())
-        analysis = analyze_score(total_score)
-        is_ml_prediction = False
+    quick_defaults = {
+        'Sleep_Duration': 7.0,
+        'Study_Hours': 3.0,
+        'Social_Media': 2.0,
+        'Physical_Activity': 1.5,
+        'Stress_Level': 3.0,
+        'Age': 21.0,
+        'CGPA': 3.0,
+    }
+    profile_feature_map = {
+        'Age': profile.get('age'),
+        'CGPA': profile.get('cgpa'),
+        'Gender': profile.get('gender'),
+        'Department': profile.get('department'),
+    }
 
-    # Build breakdown list for the result page
+    try:
+        base_row = {}
+        for feature in ['Sleep_Duration', 'Study_Hours', 'Social_Media', 'Physical_Activity', 'Stress_Level', 'Age', 'CGPA']:
+            raw = request.form.get(feature)
+            if raw is None and profile_feature_map.get(feature) is not None:
+                raw = profile_feature_map.get(feature)
+            if raw is None:
+                raw = quick_defaults.get(feature, 0.0)
+            base_row[feature] = float(raw)
+
+        base_row['Gender'] = str(profile_feature_map.get('Gender') or request.form.get('Gender') or 'Unknown')
+        base_row['Department'] = str(profile_feature_map.get('Department') or request.form.get('Department') or 'General')
+
+        base_row['sleep_study_ratio'] = base_row['Sleep_Duration'] / (base_row['Study_Hours'] + 1.0)
+        base_row['stress_x_sleep'] = base_row['Stress_Level'] * base_row['Sleep_Duration']
+        base_row['study_x_stress'] = base_row['Study_Hours'] * base_row['Stress_Level']
+        base_row['activity_social_balance'] = base_row['Physical_Activity'] - 0.5 * base_row['Social_Media']
+
+        quick_row = {}
+        for feature in quick_features:
+            if feature in ('Gender', 'Department'):
+                quick_row[feature] = str(base_row.get(feature, 'Unknown'))
+            else:
+                quick_row[feature] = float(base_row.get(feature, quick_defaults.get(feature, 0.0)))
+
+        quick_df = pd.DataFrame([quick_row], columns=quick_features)
+        quick_X = _quick_pre.transform(quick_df)
+        proba = _quick_model.predict_proba(quick_X)[0]
+        classes = getattr(_quick_model, 'classes_', None)
+        if classes is None:
+            classes = np.arange(len(proba))
+
+        class_prob = {}
+        for idx, cls in enumerate(classes):
+            class_prob[int(cls)] = float(proba[idx])
+
+        idx_to_label = {
+            0: 'Excellent Mental Well-being',
+            1: 'Moderate Stress Detected',
+            2: 'High Stress & Anxiety',
+            3: 'Severe Distress Detected',
+        }
+
+        if len(class_prob) >= 4:
+            pred_idx = max(class_prob, key=class_prob.get)
+            ml_category = idx_to_label.get(pred_idx, 'Moderate Stress Detected')
+            ml_prob = float(class_prob.get(2, 0.0) + class_prob.get(3, 0.0))
+            ml_threshold = None
+            total_score = _probability_to_score(ml_prob)
+            display_probability_label = 'Severity Risk Probability'
+        else:
+            # Backward compatibility if an older binary quick model is still loaded.
+            ml_prob = float(class_prob.get(1, 0.0))
+            ml_threshold = float(_quick_meta.get('selected_threshold', 0.5))
+            ml_category = _probability_to_category_quick(ml_prob, ml_threshold)
+            total_score = _probability_to_score_quick(ml_prob, ml_threshold)
+            display_probability_label = 'Model Probability'
+    except Exception as exc:
+        logger.error("Quick model prediction failed: %s", exc)
+        flash("Quick assessment model failed to run. Please try again.", "error")
+        return redirect('/test?mode=quick')
+
+    analysis = analyze_score_by_category(ml_category)
+
+    stress_value = _clamp_1_5(request.form.get('Stress_Level', 3), 3)
+    sleep_hours = float(request.form.get('Sleep_Duration', 7.0))
+    study_hours = float(request.form.get('Study_Hours', 3.0))
+    social_media_hours = float(request.form.get('Social_Media', 2.0))
+    activity_hours = float(request.form.get('Physical_Activity', 1.5))
+
     breakdown = [
-        {"label": "Stress Level",       "value": scores['stress'],    "pct": scores['stress']    * 20, "color": "#e17055, #d63031"},
-        {"label": "Anxiety",            "value": scores['anxiety'],   "pct": scores['anxiety']   * 20, "color": "#fdcb6e, #e17055"},
-        {"label": "Sleep Quality",      "value": scores['sleep'],     "pct": scores['sleep']     * 20, "color": "#6c63ff, #a29bfe"},
-        {"label": "Focus & Concentrate","value": scores['focus'],     "pct": scores['focus']     * 20, "color": "#fd79a8, #e84393"},
-        {"label": "Social Connection",  "value": scores['social'],    "pct": scores['social']    * 20, "color": "#00cec9, #00b894"},
-        {"label": "Mood / Sadness",     "value": scores['sadness'],   "pct": scores['sadness']   * 20, "color": "#74b9ff, #0984e3"},
-        {"label": "Energy Level",       "value": scores['energy'],    "pct": scores['energy']    * 20, "color": "#55efc4, #00b894"},
-        {"label": "Overwhelm",          "value": scores['overwhelm'], "pct": scores['overwhelm'] * 20, "color": "#a29bfe, #6c63ff"},
+        {"label": "Sleep (hrs)", "value": sleep_hours, "pct": min((sleep_hours / 9.0) * 100, 100), "color": "#6c63ff, #a29bfe"},
+        {"label": "Study (hrs)", "value": study_hours, "pct": min((study_hours / 8.0) * 100, 100), "color": "#fd79a8, #e84393"},
+        {"label": "Social media (hrs)", "value": social_media_hours, "pct": min((social_media_hours / 6.0) * 100, 100), "color": "#00cec9, #00b894"},
+        {"label": "Physical activity (hrs)", "value": activity_hours, "pct": min((activity_hours / 3.5) * 100, 100), "color": "#55efc4, #00b894"},
+        {"label": "Stress Level", "value": stress_value, "pct": stress_value * 20, "color": "#e17055, #d63031"},
     ]
 
-    # Save to DB
-    # Save as quick assessment
     try:
-        if assessment_mode == 'quick':
-            stored_quick_scores = {
-                'stress': _clamp_1_5(request.form.get('Stress_Level', scores.get('stress', 3))),
-                'anxiety': None,
-                'sleep_quality': _sleep_hours_to_quality(request.form.get('Sleep_Duration', 7)),
-                'focus': None,
-                'social': None,
-                'sadness': None,
-                'energy': None,
-                'overwhelm': None,
-            }
-        else:
-            stored_quick_scores = {
-                'stress': scores.get('stress'),
-                'anxiety': scores.get('anxiety'),
-                'sleep_quality': scores.get('sleep'),
-                'focus': scores.get('focus'),
-                'social': scores.get('social'),
-                'sadness': scores.get('sadness'),
-                'energy': scores.get('energy'),
-                'overwhelm': scores.get('overwhelm'),
-            }
-
+        stored_quick_scores = {
+            'stress': stress_value,
+            'anxiety': 3,
+            'sleep_quality': _sleep_hours_to_quality(sleep_hours),
+            'focus': 3,
+            'social': 3,
+            'sadness': 3,
+            'energy': 3,
+            'overwhelm': 3,
+        }
         create_quick_assessment(
             student_id=session.get('user_id'),
             scores=stored_quick_scores,
@@ -1145,6 +1338,8 @@ def predict():
         )
     except Exception as e:
         logger.error(f"Quick assessment save failed: {e}")
+
+    shadow_payload = None
 
     return render_template(
         'result.html',
@@ -1156,7 +1351,12 @@ def predict():
         tips=analysis['tips'],
         score=total_score,
         breakdown=breakdown,
-        ml_confidence=f"{ml_prob*100:.1f}%" if ml_prob else None,
+        ml_probability=ml_prob,
+        display_probability=ml_prob,
+        display_probability_label=display_probability_label,
+        ml_threshold=ml_threshold,
+        severity_shadow=shadow_payload,
+        assessment_mode=assessment_mode,
         profile=profile
     )
 
@@ -1204,6 +1404,9 @@ def api_test_history():
                 'result': test['result_category'],
                 'date': test['created_at'],
                 'ml_probability': test.get('ml_probability'),
+                'severity_shadow_label': test.get('severity_shadow_label'),
+                'severity_shadow_confidence': test.get('severity_shadow_confidence'),
+                'severity_shadow_class': test.get('severity_shadow_class'),
                 'department': student.get('department', '') if student else '',
                 'academic_year': student.get('academic_year', '') if student else ''
             })
@@ -1342,24 +1545,24 @@ def model_info():
     Return model metadata for transparency and debugging.
     Useful during viva demonstration to show model provenance.
     """
-    if _lifestyle_model is None or _lifestyle_meta is None:
+    if _severity_model is None or _severity_meta is None:
         return jsonify({'error': 'Model not loaded'}), 503
 
-    numeric_features = _lifestyle_meta.get('numeric_features', [])
-    categorical_features = _lifestyle_meta.get('categorical_features', [])
+    numeric_features = _severity_meta.get('numeric_features', [])
+    categorical_features = _severity_meta.get('categorical_features', [])
     feature_names = numeric_features + categorical_features
 
     info = {
-        'model_type': _lifestyle_meta.get('model_type', 'Unknown'),
-        'model_name': _lifestyle_meta.get('model_name', 'trained_model.pkl'),
-        'version': _lifestyle_meta.get('version', 'lifestyle-current'),
-        'target': _lifestyle_meta.get('target', 'depression_risk'),
+        'model_type': _severity_meta.get('model_type', 'Unknown'),
+        'model_name': _severity_meta.get('model_name', 'severity_model.pkl'),
+        'version': _severity_meta.get('version', 'severity-current'),
+        'target': _severity_meta.get('target', 'Severity_Level'),
         'feature_names': feature_names,
         'num_features': len(feature_names),
-        'dataset_name': _lifestyle_meta.get('dataset_name'),
-        'dataset_size': _lifestyle_meta.get('dataset_size'),
-        'selected_threshold': _lifestyle_meta.get('selected_threshold'),
-        'metrics': _lifestyle_meta.get('metrics') or _lifestyle_meta.get('test_metrics', {}),
+        'dataset_name': _severity_meta.get('dataset_name') or _severity_meta.get('dataset'),
+        'dataset_size': _severity_meta.get('dataset_size'),
+        'selected_threshold': _severity_meta.get('selected_threshold'),
+        'metrics': _severity_meta.get('metrics') or _severity_meta.get('test_metrics', {}),
         'status': 'loaded',
     }
     return jsonify(info), 200

@@ -1,65 +1,65 @@
-# Render Preflight Checklist (Final)
+# Render Preflight Checklist (Current)
 
-Use this as a final copy/paste checklist before pressing **Deploy**.
+Use this checklist right before deploying the current version.
 
-## 1) Render Service Setup
+## 1) Render service setup
 
-- Runtime: **Python 3**
-- Build Command:
-  - `pip install -r requirements.txt`
-- Start Command:
-  - `gunicorn app:app --bind 0.0.0.0:$PORT`
-- If using Blueprint (`render.yaml`), PostgreSQL is provisioned and `DATABASE_URL` is auto-connected.
+- Runtime: Python 3
+- Build command: `pip install -r requirements.txt`
+- Start command: `gunicorn app:app --bind 0.0.0.0:$PORT`
+- If using `render.yaml`, PostgreSQL is provisioned and `DATABASE_URL` is auto-wired.
 
-## 2) Required Environment Variables (Render)
+## 2) Required environment variables
 
-Add these exact keys in **Render → Environment**:
+Set in Render Environment:
 
-- `FLASK_SECRET` = `<strong-random-secret>`
-- `GROQ_API_KEY` = `<your-groq-api-key>`
+- `FLASK_SECRET` = strong random value
+- `GROQ_API_KEY` = valid Groq key
 
 Optional:
 
 - `GROQ_MODEL` = `llama-3.1-8b-instant`
 
-## 3) Quick Validation Rules
+## 3) Required model artifacts
 
-- `DATABASE_URL` must start with `postgresql://` (or `postgres://`, auto-normalized).
-- `FLASK_SECRET` must be set in production (do not rely on default).
-- `models/trained_model.pkl`, `models/preprocessor.pkl`, `models/features.json`, `models/metadata.json` must be present in repo.
-- Do **not** use local `.env.local` values on Render; use Render env settings only.
-- Use `.env.example` as the source of truth for local env setup.
+Ensure these files exist in repo before deploy:
 
-## 4) Health Smoke Test After Deploy
+- `models/quick_model.pkl`
+- `models/quick_preprocessor.pkl`
+- `models/quick_metadata.json`
+- `models/quick_features.json`
+- `models/severity_model.pkl`
+- `models/severity_preprocessor.pkl`
+- `models/severity_metadata.json`
+- `models/severity_features.json`
 
-- Open app root URL and verify page loads.
-- Login/register flow works.
-- Submit one assessment and confirm result page loads.
-- Open Analytics page and confirm API-backed cards/charts populate.
+## 4) Required pre-deploy DB step
 
-## 5) If Deploy Fails (Fast Triage)
+Run DB initialization/migration once against the target database before first traffic:
 
-- Boot failure with DB error:
-  - Recheck `DATABASE_URL` value and protocol.
-- AI summary/chat not working:
-  - Recheck `GROQ_API_KEY` and optional `GROQ_MODEL`.
-- Session/auth issues:
-  - Recheck `FLASK_SECRET` is set and non-empty.
+```bash
+python -c "from db_helpers import init_db; print('init_db:', init_db())"
+```
 
----
+This ensures additive columns used by current full-assessment saves are present.
 
-## Ready-to-Paste Render Config Block
+## 5) Safety checks
 
-Build command:
+- `DATABASE_URL` starts with `postgresql://` or `postgres://`
+- `FLASK_SECRET` is set (never rely on default in production)
+- `.env.local` values are not used on Render
 
-`pip install -r requirements.txt`
+## 6) Post-deploy smoke test
 
-Start command:
+1. Open home page and login/register
+2. Submit one quick assessment and one full assessment
+3. Verify result page renders
+4. Verify History table/charts load
+5. Verify Analytics table/charts load
+6. Verify AI Summary loads and Refresh Summary works
 
-`gunicorn app:app --bind 0.0.0.0:$PORT`
+## 7) Fast triage
 
-Environment keys:
-
-- `FLASK_SECRET`
-- `GROQ_API_KEY`
-- `GROQ_MODEL` (optional)
+- Boot fails with DB error: verify `DATABASE_URL` and run pre-deploy DB step
+- AI summary/chat fails: verify `GROQ_API_KEY` and optional `GROQ_MODEL`
+- Auth/session issues: verify non-empty `FLASK_SECRET`

@@ -1,0 +1,29 @@
+{
+  "model_name": "quick_model.pkl",
+  "model_type": "lightgbm",
+  "task": "multiclass_quick_severity_4level",
+  "calibrated": false,
+  "dataset_name": "merged_training_v1.csv",
+  "dataset_size": 114044,
+  "selected_threshold": null,
+  "class_labels": {
+    "0": "Excellent Mental Well-being",
+    "1": "Moderate Stress Detected",
+    "2": "High Stress & Anxiety",
+    "3": "Severe Distress Detected"
+  },
+  "training_date": "2026-03-30T20:51:02.385133",
+  "training_metrics": {
+    "cv_f1_macro": 0.5544428673738252,
+    "cv_precision_macro": 0.562839923817982,
+    "cv_recall_macro": 0.6424600790478737,
+    "cv_accuracy": 0.6843426393986295
+  },
+  "test_metrics": {
+    "accuracy": 0.6837213380683064,
+    "precision_macro": 0.567112714503288,
+    "recall_macro": 0.6511889027306798,
+    "f1_macro": 0.5574820965474714,
+    "roc_auc_ovr": 0.8632682983527586
+  }
+}
